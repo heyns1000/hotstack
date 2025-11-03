@@ -1,0 +1,29 @@
+{
+  "name": "hotstack",
+  "version": "1.0.0",
+  "description": "HotStack File Orchestration System - Cloudflare Workers",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:production": "wrangler deploy --env production",
+    "deploy:staging": "wrangler deploy --env staging",
+    "tail": "wrangler tail",
+    "test": "wrangler dev --test-scheduled"
+  },
+  "keywords": [
+    "cloudflare",
+    "workers",
+    "r2",
+    "file-upload",
+    "orchestration"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.78.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

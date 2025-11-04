@@ -1,17 +1,14 @@
-name = "hotstack-worker" 
+name = "hotstack-worker"
 main = "src/index.js"
 compatibility_date = "2024-11-01"
 compatibility_flags = ["nodejs_compat"]
 
-# Account ID
 account_id = "ad41fcfe1a84b27c62cc5cc9d590720e"
 
-# R2 Bucket binding
 [[r2_buckets]]
 binding = "HOTSTACK_BUCKET"
 bucket_name = "hotstack-bucket"
 
-# Routes - matching your Cloudflare configuration
 routes = [
   { pattern = "hotstack.faa.zone/*", zone_name = "faa.zone" },
   { pattern = "fruitful.faa.zone/*", zone_name = "faa.zone" }

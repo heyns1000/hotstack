@@ -10,7 +10,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     name: Deploy HotStack Worker
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -29,6 +29,10 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
+
+      - name: Show Wrangler Logs
+        if: failure()
+        run: cat ~/.wrangler/logs/*.log || true
 
       - name: Deployment Success
         run: |

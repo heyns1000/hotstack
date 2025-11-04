@@ -24,9 +24,24 @@ jobs:
         run: npm install
 
       - name: Deploy to Cloudflare Workers
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          echo "🔧 Running Wrangler deploy with debug output..."
+          npx wrangler deploy 2>&1 | tee deploy.log
+          EXIT_CODE=${PIPESTATUS[0]}
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "❌ Deploy failed with exit code $EXIT_CODE"
+            echo "📋 Full error log:"
+            cat deploy.log
+            exit $EXIT_CODE
+          fi
+
+      - name: Show logs on failure
+        if: failure()
+        run: |
+          echo "📋 Checking for Wrangler logs..."
+          find /home/runner/.config/.wrangler/logs/ -type f -exec cat {} \; 2>/dev/null || echo "No log files found"
 
       - name: Deployment Success
         run: |

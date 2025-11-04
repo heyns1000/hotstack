@@ -89,6 +89,29 @@ export default {
       });
     }
   },
+
+  // Queue handler for processing messages
+  async queue(batch, env) {
+    for (const message of batch.messages) {
+      try {
+        const data = message.body;
+        console.log('Processing queue message:', data);
+        
+        // Process the queue message
+        if (data.filename) {
+          console.log(`Queue processing file: ${data.filename}`);
+          // Additional processing logic can be added here
+        }
+        
+        // Acknowledge successful processing
+        message.ack();
+      } catch (error) {
+        console.error('Queue processing error:', error);
+        // Retry failed messages
+        message.retry();
+      }
+    }
+  },
 };
 
 /**

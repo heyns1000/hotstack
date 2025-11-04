@@ -901,6 +901,27 @@ function getDashboardHTML() {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        .back-button-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .btn-back {
+            display: inline-block;
+            background: #764ba2;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-back:hover {
+            background: #667eea;
+            transform: translateY(-2px);
+        }
     </style>
 </head>
 <body>
@@ -908,8 +929,8 @@ function getDashboardHTML() {
         <h1>🔥 HotStack</h1>
         <p class="subtitle">File Orchestration System - Dashboard</p>
 
-        <div style="text-align: center; margin-bottom: 20px;">
-            <a href="/" style="display: inline-block; background: #764ba2; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; transition: all 0.3s ease;">← Back to Landing</a>
+        <div class="back-button-container">
+            <a href="/" class="btn-back">← Back to Landing</a>
         </div>
 
         <div class="upload-area" id="uploadArea">

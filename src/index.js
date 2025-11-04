@@ -59,9 +59,19 @@ export default {
         return await handleProcessFile(request, env, corsHeaders);
       }
 
-      // Default: Serve HTML interface
+      // Route: Landing page
       if (path === '/' || path === '/index.html') {
-        return new Response(getHTML(), {
+        return new Response(getLandingPageHTML(), {
+          headers: {
+            'Content-Type': 'text/html; charset=utf-8',
+            ...corsHeaders,
+          },
+        });
+      }
+
+      // Route: Dashboard
+      if (path === '/dashboard') {
+        return new Response(getDashboardHTML(), {
           headers: {
             'Content-Type': 'text/html; charset=utf-8',
             ...corsHeaders,
@@ -328,9 +338,401 @@ async function handleProcessFile(request, env, corsHeaders) {
 }
 
 /**
- * HTML interface for file upload
+ * Landing page HTML with HotStack branding
  */
-function getHTML() {
+function getLandingPageHTML() {
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HotStack™ - Omnidrop Your Digital Presence</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #particleCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .container {
+            background: rgba(20, 20, 30, 0.95);
+            border-radius: 30px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 50px rgba(255, 215, 0, 0.2);
+            padding: 60px 50px;
+            max-width: 700px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+        }
+
+        h1 {
+            color: #FFD700;
+            margin-bottom: 10px;
+            font-size: 3.5em;
+            text-align: center;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .fire-emoji {
+            display: inline-block;
+            animation: flicker 2s infinite;
+        }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .tagline {
+            color: #FFD700;
+            margin-bottom: 30px;
+            font-size: 1.3em;
+            text-align: center;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .countdown {
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 2.5em;
+            color: #FFD700;
+            font-weight: bold;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.7);
+            font-family: 'Courier New', monospace;
+        }
+
+        .features {
+            margin: 30px 0;
+            color: #fff;
+        }
+
+        .feature-item {
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            font-size: 1.1em;
+        }
+
+        .feature-item::before {
+            content: '⚡';
+            margin-right: 15px;
+            font-size: 1.3em;
+            color: #FFD700;
+        }
+
+        .upload-area {
+            border: 3px dashed #FFD700;
+            border-radius: 20px;
+            padding: 50px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 215, 0, 0.05);
+            margin: 30px 0;
+        }
+
+        .upload-area:hover {
+            border-color: #FFA500;
+            background: rgba(255, 215, 0, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);
+        }
+
+        .upload-area.dragover {
+            border-color: #FFA500;
+            background: rgba(255, 215, 0, 0.2);
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            color: #FFD700;
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            color: #aaa;
+            font-size: 0.95em;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #1a1a2e;
+            border: none;
+            padding: 15px 35px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            display: inline-block;
+            text-decoration: none;
+            margin-top: 20px;
+            box-shadow: 0 5px 20px rgba(255, 215, 0, 0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(255, 215, 0, 0.6);
+        }
+
+        .btn-center {
+            text-align: center;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .status.success {
+            background: rgba(0, 255, 0, 0.2);
+            color: #0f0;
+            border: 1px solid #0f0;
+        }
+
+        .status.error {
+            background: rgba(255, 0, 0, 0.2);
+            color: #f00;
+            border: 1px solid #f00;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 215, 0, 0.3);
+            border-top: 3px solid #FFD700;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="particleCanvas"></canvas>
+
+    <div class="container">
+        <h1><span class="fire-emoji">🔥</span> HotStack™</h1>
+        <p class="tagline">Omnidrop Your Digital Presence</p>
+
+        <div class="countdown" id="countdown">03:00</div>
+
+        <div class="features">
+            <div class="feature-item">Lightning-fast file uploads</div>
+            <div class="feature-item">Unlimited storage capacity</div>
+            <div class="feature-item">Instant global distribution</div>
+            <div class="feature-item">Enterprise-grade security</div>
+        </div>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📦</div>
+            <div class="upload-text">Drop files here or click to upload</div>
+            <div class="upload-hint">Any file type, any size</div>
+        </div>
+
+        <input type="file" id="fileInput" multiple>
+
+        <div id="status"></div>
+
+        <div class="btn-center">
+            <a href="/dashboard" class="btn">Enter Dashboard →</a>
+        </div>
+    </div>
+
+    <script>
+        // Countdown timer (3 minutes)
+        let timeLeft = 180; // 3 minutes in seconds
+        const countdownEl = document.getElementById('countdown');
+
+        function updateCountdown() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            countdownEl.textContent = \`\${minutes.toString().padStart(2, '0')}:\${seconds.toString().padStart(2, '0')}\`;
+            
+            if (timeLeft > 0) {
+                timeLeft--;
+            } else {
+                timeLeft = 180; // Reset to 3 minutes
+            }
+        }
+
+        setInterval(updateCountdown, 1000);
+
+        // Particle animation
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height - canvas.height;
+                this.size = Math.random() * 3 + 1;
+                this.speedY = Math.random() * 2 + 1;
+                this.speedX = Math.random() * 1 - 0.5;
+                this.opacity = Math.random() * 0.5 + 0.3;
+            }
+
+            update() {
+                this.y += this.speedY;
+                this.x += this.speedX;
+
+                if (this.y > canvas.height) {
+                    this.y = -10;
+                    this.x = Math.random() * canvas.width;
+                }
+            }
+
+            draw() {
+                ctx.fillStyle = \`rgba(255, 215, 0, \${this.opacity})\`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        const particles = [];
+        for (let i = 0; i < 100; i++) {
+            particles.push(new Particle());
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+
+            requestAnimationFrame(animateParticles);
+        }
+
+        animateParticles();
+
+        // Upload functionality
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const status = document.getElementById('status');
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            handleFiles(files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const files = e.target.files;
+            handleFiles(files);
+        });
+
+        async function handleFiles(files) {
+            for (let file of files) {
+                await uploadFile(file);
+            }
+        }
+
+        async function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            showStatus('Uploading...', 'loading');
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showStatus(\`✅ \${file.name} uploaded successfully!\`, 'success');
+                } else {
+                    showStatus(\`❌ Upload failed: \${result.error}\`, 'error');
+                }
+            } catch (error) {
+                showStatus(\`❌ Upload error: \${error.message}\`, 'error');
+            }
+        }
+
+        function showStatus(message, type) {
+            status.innerHTML = \`<div class="status \${type}">\${message}</div>\`;
+            if (type !== 'loading') {
+                setTimeout(() => status.innerHTML = '', 3000);
+            }
+        }
+    </script>
+</body>
+</html>
+  `;
+}
+
+/**
+ * Dashboard HTML interface for file management
+ */
+function getDashboardHTML() {
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -504,7 +906,11 @@ function getHTML() {
 <body>
     <div class="container">
         <h1>🔥 HotStack</h1>
-        <p class="subtitle">File Orchestration System</p>
+        <p class="subtitle">File Orchestration System - Dashboard</p>
+
+        <div style="text-align: center; margin-bottom: 20px;">
+            <a href="/" style="display: inline-block; background: #764ba2; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; transition: all 0.3s ease;">← Back to Landing</a>
+        </div>
 
         <div class="upload-area" id="uploadArea">
             <div class="upload-icon">📁</div>

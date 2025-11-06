@@ -26,6 +26,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const path = url.pathname;
+    const hostname = url.hostname;
 
     // CORS headers for all responses
     const corsHeaders = {
@@ -91,6 +92,17 @@ export default {
 
       // Route: Landing page
       if (path === '/' || path === '/index.html') {
+        // Serve fruitful page for fruitful.faa.zone
+        if (hostname.includes('fruitful')) {
+          return new Response(getFruitfulHTML(), {
+            headers: {
+              'Content-Type': 'text/html; charset=utf-8',
+              ...corsHeaders,
+            },
+          });
+        }
+        
+        // Serve hotstack page for hotstack.faa.zone
         return new Response(getLandingPageHTML(), {
           headers: {
             'Content-Type': 'text/html; charset=utf-8',
@@ -637,6 +649,390 @@ async function handleProcessFile(request, env, corsHeaders) {
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
   }
+}
+
+/**
+ * Fruitful page HTML with HotStack section
+ */
+function getFruitfulHTML() {
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fruitful | HotStack™</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #1a1a1c;
+            color: #ffffff;
+            line-height: 1.6;
+        }
+        .header {
+            background: rgba(26, 27, 32, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid rgba(255, 204, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffcc00 0%, #ff9900 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block;
+        }
+        .hero {
+            text-align: center;
+            padding: 6rem 2rem 4rem;
+            background: linear-gradient(180deg, #1a1a1c 0%, #2a2a2c 100%);
+        }
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #ffffff 0%, #ffcc00 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero p {
+            font-size: 1.3rem;
+            color: #aaa;
+            margin-bottom: 2rem;
+        }
+        .hotstack-section {
+            max-width: 1200px;
+            margin: 4rem auto;
+            padding: 0 2rem;
+        }
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #ffcc00;
+            text-align: center;
+        }
+        .section-subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #aaa;
+            margin-bottom: 3rem;
+        }
+        .auth-container {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 204, 0, 0.2);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 3rem;
+            backdrop-filter: blur(10px);
+        }
+        .auth-status {
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 8px;
+            background: rgba(255, 204, 0, 0.1);
+            margin-bottom: 1.5rem;
+        }
+        .upload-zone {
+            border: 3px dashed rgba(255, 204, 0, 0.3);
+            border-radius: 12px;
+            padding: 4rem 2rem;
+            text-align: center;
+            background: rgba(255, 204, 0, 0.05);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .upload-zone:hover,
+        .upload-zone.drag-over {
+            border-color: #ffcc00;
+            background: rgba(255, 204, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        .upload-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        .btn {
+            background: linear-gradient(135deg, #ffcc00 0%, #ff9900 100%);
+            color: #1a1a1c;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block;
+            text-decoration: none;
+            margin: 0.5rem;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255, 204, 0, 0.3);
+        }
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+        .status-message {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            display: none;
+        }
+        .status-message.success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.5);
+            color: #4caf50;
+        }
+        .status-message.error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid rgba(244, 67, 54, 0.5);
+            color: #f44336;
+        }
+        input {
+            width: 100%;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 204, 0, 0.2);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin: 4rem 0;
+        }
+        .feature-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 204, 0, 0.2);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: #ffcc00;
+            background: rgba(255, 204, 0, 0.1);
+        }
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        .feature-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #ffcc00;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">🍊 Fruitful | HotStack™</div>
+    </div>
+
+    <div class="hero">
+        <h1>Welcome to Fruitful</h1>
+        <p>Powered by HotStack™ Technology</p>
+    </div>
+
+    <div class="hotstack-section">
+        <h2 class="section-title">🔥 HotStack™</h2>
+        <p class="section-subtitle">Omnidrop Your Digital Presence</p>
+
+        <div class="auth-container">
+            <div class="auth-status" id="authStatus">
+                <div id="notAuthenticated">
+                    <p>Please sign in to use HotStack™</p>
+                    <input type="email" id="emailInput" placeholder="Email" />
+                    <input type="password" id="passwordInput" placeholder="Password" />
+                    <input type="text" id="usernameInput" placeholder="Username (for signup)" />
+                    <div>
+                        <button class="btn" onclick="handleSignup()">Sign Up</button>
+                        <button class="btn btn-secondary" onclick="handleSignin()">Sign In</button>
+                    </div>
+                </div>
+                <div id="authenticated" style="display: none;">
+                    <p>Welcome, <span id="userName"></span>!</p>
+                    <button class="btn btn-secondary" onclick="handleSignout()">Sign Out</button>
+                </div>
+            </div>
+
+            <div id="uploadSection" style="display: none;">
+                <div class="upload-zone" id="dropZone">
+                    <div class="upload-icon">📁</div>
+                    <h3>Drag & Drop Files Here</h3>
+                    <p>or click to browse</p>
+                    <input type="file" id="fileInput" style="display: none;" />
+                </div>
+                <div class="status-message" id="statusMessage"></div>
+            </div>
+        </div>
+
+        <div class="features">
+            <div class="feature-card">
+                <div class="feature-icon">🚀</div>
+                <div class="feature-title">Instant Upload</div>
+                <p>Lightning-fast file uploads to R2 storage</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <div class="feature-title">Secure Auth</div>
+                <p>D1 database with bcrypt password hashing</p>
+            </div>
+            <div class="feature-card">
+                <div-icon">⚡</div>
+                <div class="feature-title">Real-time</div>
+                <p>Queue processing for instant updates</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🌐</div>
+                <div class="feature-title">Edge Network</div>
+                <p>Deployed on Cloudflare's global network</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script>
+        let currentUser = null;
+
+        // Check auth status on load
+        async function checkAuthStatus() {
+            try {
+                const user = await auth.getCurrentUser();
+                if (user) {
+                    currentUser = user;
+                    document.getElementById('notAuthenticated').style.display = 'none';
+                    document.getElementById('authenticated').style.display = 'block';
+                    document.getElementById('userName').textContent = user.username || user.email;
+                    document.getElementById('uploadSection').style.display = 'block';
+                }
+            } catch (error) {
+                console.log('Not authenticated');
+            }
+        }
+
+        async function handleSignup() {
+            const email = document.getElementById('emailInput').value;
+            const password = document.getElementById('passwordInput').value;
+            const username = document.getElementById('usernameInput').value;
+
+            try {
+                await auth.signup(email, password, username);
+                showMessage('Account created! Signing in...', 'success');
+                setTimeout(() => handleSignin(), 1000);
+            } catch (error) {
+                showMessage('Signup failed: ' + error.message, 'error');
+            }
+        }
+
+        async function handleSignin() {
+            const email = document.getElementById('emailInput').value;
+            const password = document.getElementById('passwordInput').value;
+
+            try {
+                const result = await auth.signin(email, password);
+                showMessage('Signed in successfully!', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } catch (error) {
+                showMessage('Signin failed: ' + error.message, 'error');
+            }
+        }
+
+        async function handleSignout() {
+            try {
+                await auth.signout();
+                showMessage('Signed out successfully!', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } catch (error) {
+                showMessage('Signout failed: ' + error.message, 'error');
+            }
+        }
+
+        function showMessage(message, type) {
+            const statusMessage = document.getElementById('statusMessage');
+            statusMessage.textContent = message;
+            statusMessage.className = \`status-message \${type}\`;
+            statusMessage.style.display = 'block';
+            setTimeout(() => {
+                statusMessage.style.display = 'none';
+            }, 5000);
+        }
+
+        // File upload handling
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+
+        dropZone.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                await uploadFile(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', async (e) => {
+            if (e.target.files.length > 0) {
+                await uploadFile(e.target.files[0]);
+            }
+        });
+
+        async function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                showMessage('Uploading...', 'success');
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showMessage(\`File uploaded successfully! \${result.filename}\`, 'success');
+                } else {
+                    throw new Error('Upload failed');
+                }
+            } catch (error) {
+                showMessage('Upload failed: ' + error.message, 'error');
+            }
+        }
+
+        // Initialize
+        checkAuthStatus();
+    </script>
+</body>
+</html>
+`;
 }
 
 /**

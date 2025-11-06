@@ -10,6 +10,14 @@ account_id = "ad41fcfe1a84b27c62cc5cc9d590720e"
 binding = "HOTSTACK_BUCKET"
 bucket_name = "hotstack-bucket"
 
+# D1 Database binding
+# IMPORTANT: Replace YOUR_DATABASE_ID with your actual database ID after running:
+# wrangler d1 create hotstack-db
+[[d1_databases]]
+binding = "DB"
+database_name = "hotstack-db"
+database_id = "YOUR_DATABASE_ID"
+
 # Routes - SEPARATE from r2_buckets!
 [[routes]]
 pattern = "hotstack.faa.zone/*"

@@ -7,7 +7,17 @@
  * - R2 bucket integration
  * - Queue processing system
  * - Backend integration with Replit
+ * - User authentication with D1 database
  */
+
+import {
+  createUser,
+  authenticateUser,
+  verifySession,
+  deleteSession,
+  logAudit,
+  getUserById
+} from './db/users.js';
 
 export default {
   async fetch(request, env) {
@@ -27,6 +37,23 @@ export default {
     }
 
     try {
+      // Authentication endpoints
+      if (path === '/api/auth/signup' && request.method === 'POST') {
+        return await handleSignup(request, env, corsHeaders);
+      }
+
+      if (path === '/api/auth/signin' && request.method === 'POST') {
+        return await handleSignin(request, env, corsHeaders);
+      }
+
+      if (path === '/api/auth/signout' && request.method === 'POST') {
+        return await handleSignout(request, env, corsHeaders);
+      }
+
+      if (path === '/api/auth/me' && request.method === 'GET') {
+        return await handleGetMe(request, env, corsHeaders);
+      }
+
       // Route: Upload file to R2
       if (path === '/upload' && request.method === 'POST') {
         return await handleUpload(request, env, corsHeaders);
@@ -123,6 +150,258 @@ export default {
     }
   },
 };
+
+/**
+ * Extract session ID from cookie or Authorization header
+ */
+function getSessionId(request) {
+  // Try Authorization header first
+  const authHeader = request.headers.get('Authorization');
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return authHeader.substring(7);
+  }
+
+  // Try cookie
+  const cookie = request.headers.get('Cookie');
+  if (cookie) {
+    const match = cookie.match(/session=([^;]+)/);
+    if (match) {
+      return match[1];
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Get client IP address
+ */
+function getClientIP(request) {
+  return request.headers.get('CF-Connecting-IP') || 
+         request.headers.get('X-Forwarded-For') || 
+         'unknown';
+}
+
+/**
+ * Handle user signup
+ */
+async function handleSignup(request, env, corsHeaders) {
+  try {
+    if (!env.DB) {
+      return new Response(JSON.stringify({ error: 'Database not configured' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
+    const body = await request.json();
+    const { email, password, username } = body;
+
+    if (!email || !password) {
+      return new Response(JSON.stringify({ error: 'Email and password are required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
+    const user = await createUser(env.DB, email, password, username);
+
+    // Log audit
+    const ipAddress = getClientIP(request);
+    const userAgent = request.headers.get('User-Agent');
+    await logAudit(env.DB, user.id, 'signup', null, ipAddress, userAgent);
+
+    return new Response(JSON.stringify({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username
+      }
+    }), {
+      status: 201,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+    });
+
+  } catch (error) {
+    const statusCode = error.message === 'User already exists' ? 409 : 400;
+    return new Response(JSON.stringify({ 
+      error: error.message 
+    }), {
+      status: statusCode,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+    });
+  }
+}
+
+/**
+ * Handle user signin
+ */
+async function handleSignin(request, env, corsHeaders) {
+  try {
+    if (!env.DB) {
+      return new Response(JSON.stringify({ error: 'Database not configured' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
+    const body = await request.json();
+    const { email, password } = body;
+
+    if (!email || !password) {
+      return new Response(JSON.stringify({ error: 'Email and password are required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
+    const result = await authenticateUser(env.DB, email, password);
+
+    // Log audit
+    const ipAddress = getClientIP(request);
+    const userAgent = request.headers.get('User-Agent');
+    await logAudit(env.DB, result.user.id, 'signin', null, ipAddress, userAgent);
+
+    // Set session cookie
+    const cookieHeader = `session=${result.sessionId}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}`;
+
+    return new Response(JSON.stringify({
+      success: true,
+      sessionId: result.sessionId,
+      expiresAt: result.expiresAt,
+      user: result.user
+    }), {
+      headers: { 
+        'Content-Type': 'application/json',
+        'Set-Cookie': cookieHeader,
+        ...corsHeaders 
+      },
+    });
+
+  } catch (error) {
+    return new Response(JSON.stringify({ 
+      error: error.message === 'Invalid credentials' ? 'Invalid email or password' : error.message
+    }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+    });
+  }
+}
+
+/**
+ * Handle user signout
+ */
+async function handleSignout(request, env, corsHeaders) {
+  try {
+    if (!env.DB) {
+      return new Response(JSON.stringify({ error: 'Database not configured' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
+    const sessionId = getSessionId(request);
+    if (!sessionId) {
+      return new Response(JSON.stringify({ error: 'Not authenticated' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
+    // Verify session to get user ID for audit log
+    const session = await verifySession(env.DB, sessionId);
+    if (session) {
+      const ipAddress = getClientIP(request);
+      const userAgent = request.headers.get('User-Agent');
+      await logAudit(env.DB, session.user.id, 'signout', null, ipAddress, userAgent);
+    }
+
+    await deleteSession(env.DB, sessionId);
+
+    // Clear session cookie
+    const cookieHeader = 'session=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0';
+
+    return new Response(JSON.stringify({
+      success: true,
+      message: 'Signed out successfully'
+    }), {
+      headers: { 
+        'Content-Type': 'application/json',
+        'Set-Cookie': cookieHeader,
+        ...corsHeaders 
+      },
+    });
+
+  } catch (error) {
+    return new Response(JSON.stringify({ 
+      error: 'Signout failed'
+    }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+    });
+  }
+}
+
+/**
+ * Get current user info
+ */
+async function handleGetMe(request, env, corsHeaders) {
+  try {
+    if (!env.DB) {
+      return new Response(JSON.stringify({ error: 'Database not configured' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
+    const sessionId = getSessionId(request);
+    if (!sessionId) {
+      return new Response(JSON.stringify({ error: 'Not authenticated' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
+    const session = await verifySession(env.DB, sessionId);
+    if (!session) {
+      return new Response(JSON.stringify({ error: 'Invalid or expired session' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
+    // Get full user details
+    const user = await getUserById(env.DB, session.user.id);
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'User not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
+    return new Response(JSON.stringify({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        createdAt: user.created_at,
+        lastLoginAt: user.last_login_at
+      }
+    }), {
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+    });
+
+  } catch (error) {
+    return new Response(JSON.stringify({ 
+      error: 'Failed to get user info'
+    }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+    });
+  }
+}
 
 /**
  * Handle file upload to R2 bucket

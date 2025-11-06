@@ -11,6 +11,8 @@ binding = "HOTSTACK_BUCKET"
 bucket_name = "hotstack-bucket"
 
 # D1 Database binding
+# IMPORTANT: Replace YOUR_DATABASE_ID with your actual database ID after running:
+# wrangler d1 create hotstack-db
 [[d1_databases]]
 binding = "DB"
 database_name = "hotstack-db"

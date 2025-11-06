@@ -19,6 +19,9 @@ import {
   getUserById
 } from './db/users.js';
 
+// Session configuration
+const SESSION_DURATION_SECONDS = 7 * 24 * 60 * 60; // 7 days
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -284,7 +287,7 @@ async function handleSignin(request, env, corsHeaders) {
     await logAudit(env.DB, result.user.id, 'signin', null, ipAddress, userAgent);
 
     // Set session cookie
-    const cookieHeader = `session=${result.sessionId}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}`;
+    const cookieHeader = `session=${result.sessionId}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${SESSION_DURATION_SECONDS}`;
 
     return new Response(JSON.stringify({
       success: true,

@@ -5,6 +5,9 @@
 
 import bcrypt from 'bcryptjs';
 
+// Session configuration
+const SESSION_DURATION_SECONDS = 7 * 24 * 60 * 60; // 7 days
+
 /**
  * Generate a random session ID
  */
@@ -100,7 +103,7 @@ export async function authenticateUser(db, email, password) {
 
     // Generate session
     const sessionId = generateSessionId();
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days
+    const expiresAt = new Date(Date.now() + SESSION_DURATION_SECONDS * 1000).toISOString();
 
     // Create session
     await db.prepare(

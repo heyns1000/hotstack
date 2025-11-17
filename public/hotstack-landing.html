@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HotStack™ - Omnidrop Your Digital Presence</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #particleCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .container {
+            background: rgba(20, 20, 30, 0.95);
+            border-radius: 30px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 50px rgba(218, 165, 32, 0.2);
+            padding: 60px 50px;
+            max-width: 700px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+            border: 2px solid rgba(218, 165, 32, 0.3);
+        }
+
+        h1 {
+            color: #DAA520;
+            margin-bottom: 10px;
+            font-size: 3.5em;
+            text-align: center;
+            text-shadow: 0 0 20px rgba(218, 165, 32, 0.5);
+        }
+
+        .fire-emoji {
+            display: inline-block;
+            animation: flicker 2s infinite;
+        }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .tagline {
+            color: #DAA520;
+            margin-bottom: 30px;
+            font-size: 1.3em;
+            text-align: center;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .countdown {
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 2.5em;
+            color: #DAA520;
+            font-weight: bold;
+            text-shadow: 0 0 15px rgba(218, 165, 32, 0.7);
+            font-family: 'Courier New', monospace;
+        }
+
+        .features {
+            margin: 30px 0;
+            color: #fff;
+        }
+
+        .feature-item {
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            font-size: 1.1em;
+        }
+
+        .feature-item::before {
+            content: '⚡';
+            margin-right: 15px;
+            font-size: 1.3em;
+            color: #DAA520;
+        }
+
+        .upload-area {
+            border: 3px dashed #DAA520;
+            border-radius: 20px;
+            padding: 50px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(218, 165, 32, 0.05);
+            margin: 30px 0;
+        }
+
+        .upload-area:hover {
+            border-color: #B8860B;
+            background: rgba(218, 165, 32, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(218, 165, 32, 0.3);
+        }
+
+        .upload-area.dragover {
+            border-color: #B8860B;
+            background: rgba(218, 165, 32, 0.2);
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            color: #DAA520;
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            color: #aaa;
+            font-size: 0.95em;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #DAA520 0%, #B8860B 100%);
+            color: #1a1a2e;
+            border: none;
+            padding: 15px 35px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            display: inline-block;
+            text-decoration: none;
+            margin-top: 20px;
+            box-shadow: 0 5px 20px rgba(218, 165, 32, 0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(218, 165, 32, 0.6);
+        }
+
+        .btn-center {
+            text-align: center;
+        }
+
+        .status-console {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            border: 1px solid rgba(218, 165, 32, 0.2);
+        }
+
+        .status-log {
+            color: #DAA520;
+            margin: 5px 0;
+            padding: 3px 0;
+        }
+
+        .status-log.success {
+            color: #4caf50;
+        }
+
+        .status-log.error {
+            color: #f44336;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(218, 165, 32, 0.3);
+            border-top: 3px solid #DAA520;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 15px 0;
+            display: none;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #DAA520 0%, #B8860B 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1a1a2e;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="particleCanvas"></canvas>
+
+    <div class="container">
+        <h1><span class="fire-emoji">🔥</span> HotStack™</h1>
+        <p class="tagline">Omnidrop Your Digital Presence</p>
+
+        <div class="countdown" id="countdown">03:00</div>
+
+        <div class="features">
+            <div class="feature-item">Lightning-fast file uploads</div>
+            <div class="feature-item">Unlimited storage capacity</div>
+            <div class="feature-item">Instant global distribution</div>
+            <div class="feature-item">Enterprise-grade security</div>
+        </div>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📦</div>
+            <div class="upload-text">Drop files here or click to upload</div>
+            <div class="upload-hint">Any file type, any size</div>
+        </div>
+
+        <input type="file" id="fileInput" multiple>
+
+        <div class="progress-bar" id="progressBar">
+            <div class="progress-fill" id="progressFill">0%</div>
+        </div>
+
+        <div class="status-console" id="statusConsole">
+            <div class="status-log">[SYSTEM] Ready to upload files...</div>
+        </div>
+
+        <div class="btn-center">
+            <a href="/dashboard" class="btn">Enter Dashboard →</a>
+        </div>
+    </div>
+
+    <script>
+        // Countdown timer (3 minutes)
+        let timeLeft = 180; // 3 minutes in seconds
+        const countdownEl = document.getElementById('countdown');
+
+        function updateCountdown() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            countdownEl.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (timeLeft > 0) {
+                timeLeft--;
+            } else {
+                timeLeft = 180; // Reset to 3 minutes
+            }
+        }
+
+        setInterval(updateCountdown, 1000);
+
+        // Particle animation
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height - canvas.height;
+                this.size = Math.random() * 3 + 1;
+                this.speedY = Math.random() * 2 + 1;
+                this.speedX = Math.random() * 1 - 0.5;
+                this.opacity = Math.random() * 0.5 + 0.3;
+            }
+
+            update() {
+                this.y += this.speedY;
+                this.x += this.speedX;
+
+                if (this.y > canvas.height) {
+                    this.y = -10;
+                    this.x = Math.random() * canvas.width;
+                }
+            }
+
+            draw() {
+                ctx.fillStyle = `rgba(218, 165, 32, ${this.opacity})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        const particles = [];
+        for (let i = 0; i < 100; i++) {
+            particles.push(new Particle());
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+
+            requestAnimationFrame(animateParticles);
+        }
+
+        animateParticles();
+
+        // Status Console Logger
+        function statusLog(message, type = 'info') {
+            const console = document.getElementById('statusConsole');
+            const now = new Date();
+            const time = now.toLocaleTimeString();
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = `status-log ${type}`;
+            logEntry.textContent = `[${time}] ${message}`;
+            
+            console.appendChild(logEntry);
+            console.scrollTop = console.scrollHeight;
+            
+            // Keep only last 20 entries
+            while (console.children.length > 20) {
+                console.removeChild(console.firstChild);
+            }
+        }
+
+        // Upload functionality
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            handleFiles(files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const files = e.target.files;
+            handleFiles(files);
+        });
+
+        async function handleFiles(files) {
+            for (let file of files) {
+                await uploadFile(file);
+            }
+        }
+
+        async function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            statusLog(`Starting upload: ${file.name}`, 'info');
+            progressBar.style.display = 'block';
+
+            // Create XMLHttpRequest for progress tracking
+            const xhr = new XMLHttpRequest();
+
+            // Track upload progress
+            xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable) {
+                    const percentComplete = Math.round((e.loaded / e.total) * 100);
+                    progressFill.style.width = percentComplete + '%';
+                    progressFill.textContent = percentComplete + '%';
+                }
+            });
+
+            // Handle completion
+            xhr.addEventListener('load', () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                        const result = JSON.parse(xhr.responseText);
+                        if (result.success) {
+                            statusLog(`✅ ${file.name} uploaded successfully!`, 'success');
+                            setTimeout(() => {
+                                progressBar.style.display = 'none';
+                                progressFill.style.width = '0%';
+                            }, 2000);
+                        } else {
+                            statusLog(`❌ Upload failed: ${result.error}`, 'error');
+                            progressBar.style.display = 'none';
+                        }
+                    } catch (error) {
+                        statusLog(`❌ Upload error: ${error.message}`, 'error');
+                        progressBar.style.display = 'none';
+                    }
+                } else {
+                    statusLog(`❌ Upload failed: HTTP ${xhr.status}`, 'error');
+                    progressBar.style.display = 'none';
+                }
+            });
+
+            // Handle errors
+            xhr.addEventListener('error', () => {
+                statusLog('❌ Network error during upload', 'error');
+                progressBar.style.display = 'none';
+            });
+
+            xhr.addEventListener('abort', () => {
+                statusLog('❌ Upload cancelled', 'error');
+                progressBar.style.display = 'none';
+            });
+
+            // Open connection and send
+            xhr.open('POST', '/api/upload', true);
+            xhr.send(formData);
+        }
+    </script>
+</body>
+</html>

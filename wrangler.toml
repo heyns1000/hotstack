@@ -8,7 +8,12 @@ account_id = "ad41fcfe1a84b27c62cc5cc9d590720e"
 # R2 Bucket binding
 [[r2_buckets]]
 binding = "HOTSTACK_BUCKET"
-bucket_name = "hotstack-bucket"
+bucket_name = "hotstack-intake-bucket"
+
+# Environment variables
+[vars]
+# Add AUTH_SECRET as an environment variable for development
+# In production, use: wrangler secret put AUTH_SECRET
 
 # D1 Database binding
 # IMPORTANT: Replace YOUR_DATABASE_ID with your actual database ID after running:

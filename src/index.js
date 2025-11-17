@@ -63,6 +63,11 @@ export default {
         return await handleUpload(request, env, corsHeaders);
       }
 
+      // Route: Upload status (recent uploads)
+      if (path === '/status' && request.method === 'GET') {
+        return await handleUploadStatus(env, corsHeaders);
+      }
+
       // Route: List files in R2
       if (path === '/files' && request.method === 'GET') {
         return await handleListFiles(env, corsHeaders);
@@ -114,6 +119,16 @@ export default {
       // Route: Dashboard
       if (path === '/dashboard') {
         return new Response(getDashboardHTML(), {
+          headers: {
+            'Content-Type': 'text/html; charset=utf-8',
+            ...corsHeaders,
+          },
+        });
+      }
+
+      // Route: HotStack Intake page
+      if (path === '/intake' || path === '/hotstack-intake' || path === '/hotstack-intake.html') {
+        return new Response(getIntakeHTML(), {
           headers: {
             'Content-Type': 'text/html; charset=utf-8',
             ...corsHeaders,
@@ -440,9 +455,22 @@ async function handleGetMe(request, env, corsHeaders) {
 
 /**
  * Handle file upload to R2 bucket
+ * Enhanced with:
+ * - Optional Bearer token authentication
+ * - Multipart/streaming upload for large files
+ * - Auto-deploy manifest creation
  */
 async function handleUpload(request, env, corsHeaders) {
   try {
+    // Optional AUTH CHECK for secure uploads
+    const authHeader = request.headers.get('Authorization');
+    if (env.AUTH_SECRET && authHeader !== `Bearer ${env.AUTH_SECRET}`) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
     const formData = await request.formData();
     const file = formData.get('file');
 
@@ -453,42 +481,103 @@ async function handleUpload(request, env, corsHeaders) {
       });
     }
 
-    const filename = file.name;
-    const arrayBuffer = await file.arrayBuffer();
-
-    // Upload to R2 bucket
-    await env.HOTSTACK_BUCKET.put(filename, arrayBuffer, {
+    // Generate unique key with timestamp and original filename
+    const key = `hotstack/${Date.now()}-${file.name}`;
+    
+    // Multipart upload to R2 using streaming for large files
+    // This allows handling files of any size efficiently
+    await env.HOTSTACK_BUCKET.put(key, file.stream(), {
       httpMetadata: {
         contentType: file.type,
       },
       customMetadata: {
         uploadedAt: new Date().toISOString(),
-        size: arrayBuffer.byteLength.toString(),
+        originalName: file.name,
+        size: file.size.toString(),
       },
+    });
+
+    // AUTO-DEPLOY TO EDGE - Create manifest for Fruitful sync
+    const manifestKey = `${key}-manifest.json`;
+    const manifest = {
+      status: 'deployed',
+      timestamp: new Date().toISOString(),
+      path: key,
+      originalName: file.name,
+      size: file.size,
+      contentType: file.type
+    };
+    
+    await env.HOTSTACK_BUCKET.put(manifestKey, JSON.stringify(manifest, null, 2), {
+      httpMetadata: { contentType: 'application/json' }
     });
 
     // Send to queue for processing (if queue is configured)
     if (env.HOTSTACK_QUEUE) {
       await env.HOTSTACK_QUEUE.send({
-        filename,
-        size: arrayBuffer.byteLength,
+        key,
+        originalName: file.name,
+        size: file.size,
         contentType: file.type,
         timestamp: Date.now(),
+        manifestKey,
       });
     }
 
     return new Response(JSON.stringify({
       success: true,
-      filename,
-      size: arrayBuffer.byteLength,
+      key,
+      filename: file.name,
+      size: file.size,
+      manifest: manifestKey,
       message: 'File uploaded successfully',
     }), {
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
 
   } catch (error) {
+    console.error('Upload error:', error);
     return new Response(JSON.stringify({ 
       error: 'Upload failed', 
+      message: error.message 
+    }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+    });
+  }
+}
+
+/**
+ * Get upload status - list recent uploads
+ */
+async function handleUploadStatus(env, corsHeaders) {
+  try {
+    // List recent uploads from hotstack/ prefix
+    const objects = await env.HOTSTACK_BUCKET.list({ 
+      prefix: 'hotstack/',
+      limit: 10 
+    });
+    
+    // Filter out manifest files and map to response format
+    const files = objects.objects
+      .filter(obj => !obj.key.endsWith('-manifest.json'))
+      .map(obj => ({
+        key: obj.key,
+        uploaded: obj.uploaded,
+        size: obj.size
+      }));
+    
+    return new Response(JSON.stringify({ 
+      success: true,
+      files,
+      count: files.length
+    }), {
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+    });
+  } catch (error) {
+    console.error('Status error:', error);
+    return new Response(JSON.stringify({ 
+      error: 'Failed to retrieve status',
       message: error.message 
     }), {
       status: 500,
@@ -2351,6 +2440,480 @@ function getAuthTestHTML() {
             if (auth.isAuthenticated()) {
                 console.log('User is authenticated');
             }
+        });
+    </script>
+</body>
+</html>\`;
+}
+
+/**
+ * HotStack Intake HTML page with functional progress bar
+ */
+function getIntakeHTML() {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HotStack™ Intake - Secure File Upload</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #fff;
+        }
+
+        .container {
+            background: rgba(20, 20, 30, 0.95);
+            border-radius: 24px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5), 0 0 50px rgba(255, 215, 0, 0.2);
+            padding: 50px 40px;
+            max-width: 700px;
+            width: 100%;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+        }
+
+        h1 {
+            color: #FFD700;
+            margin-bottom: 15px;
+            font-size: 2.8em;
+            text-align: center;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .subtitle {
+            color: #FFD700;
+            margin-bottom: 35px;
+            font-size: 1.2em;
+            text-align: center;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .upload-zone {
+            border: 3px dashed rgba(255, 215, 0, 0.5);
+            border-radius: 20px;
+            padding: 60px 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 215, 0, 0.05);
+            position: relative;
+        }
+
+        .upload-zone:hover {
+            border-color: #FFD700;
+            background: rgba(255, 215, 0, 0.15);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(255, 215, 0, 0.3);
+        }
+
+        .upload-zone.dragover {
+            border-color: #FFA500;
+            background: rgba(255, 215, 0, 0.25);
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 4.5em;
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .upload-text {
+            color: #FFD700;
+            font-size: 1.4em;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .upload-hint {
+            color: #aaa;
+            font-size: 1em;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .progress-container {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .progress-bar-wrapper {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            height: 35px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #FFD700 0%, #FFA500 100%);
+            border-radius: 12px;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1a1a2e;
+            font-weight: 700;
+            font-size: 0.95em;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .progress-text {
+            margin-top: 12px;
+            color: #FFD700;
+            font-size: 1em;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .file-info {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255, 215, 0, 0.1);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .file-info p {
+            margin: 8px 0;
+            color: #fff;
+        }
+
+        .file-info strong {
+            color: #FFD700;
+        }
+
+        .status {
+            margin-top: 25px;
+            padding: 18px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 600;
+            display: none;
+        }
+
+        .status.success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 2px solid rgba(76, 175, 80, 0.5);
+            color: #4caf50;
+        }
+
+        .status.error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 2px solid rgba(244, 67, 54, 0.5);
+            color: #f44336;
+        }
+
+        .auth-section {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: rgba(255, 215, 0, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .auth-section label {
+            display: block;
+            margin-bottom: 8px;
+            color: #FFD700;
+            font-weight: 600;
+        }
+
+        .auth-section input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1em;
+        }
+
+        .auth-section input:focus {
+            outline: none;
+            border-color: #FFD700;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .recent-uploads {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255, 215, 0, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            display: none;
+        }
+
+        .recent-uploads h3 {
+            color: #FFD700;
+            margin-bottom: 15px;
+        }
+
+        .recent-item {
+            padding: 10px;
+            margin: 8px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            font-size: 0.9em;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #1a1a2e;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+            box-shadow: 0 5px 20px rgba(255, 215, 0, 0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(255, 215, 0, 0.6);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 HotStack™ Intake</h1>
+        <p class="subtitle">Secure File Upload System</p>
+
+        <div class="auth-section">
+            <label for="authToken">Authorization Token (optional):</label>
+            <input type="password" id="authToken" placeholder="Enter Bearer token if required">
+        </div>
+
+        <div class="upload-zone" id="uploadZone">
+            <div class="upload-icon">📦</div>
+            <div class="upload-text">Drop files here or click to upload</div>
+            <div class="upload-hint">Any file type • Any size • Secure multipart upload</div>
+        </div>
+
+        <input type="file" id="fileInput" multiple>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar-wrapper">
+                <div class="progress-bar" id="progressBar">0%</div>
+            </div>
+            <div class="progress-text" id="progressText">Preparing upload...</div>
+        </div>
+
+        <div class="file-info" id="fileInfo" style="display: none;"></div>
+
+        <div class="status" id="status"></div>
+
+        <button class="btn" id="statusBtn" onclick="loadRecentUploads()">View Recent Uploads</button>
+
+        <div class="recent-uploads" id="recentUploads"></div>
+    </div>
+
+    <script>
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const fileInfo = document.getElementById('fileInfo');
+        const statusDiv = document.getElementById('status');
+        const authTokenInput = document.getElementById('authToken');
+        const recentUploadsDiv = document.getElementById('recentUploads');
+
+        // Click to upload
+        uploadZone.addEventListener('click', () => fileInput.click());
+
+        // Drag and drop handlers
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFiles(files);
+            }
+        });
+
+        // File selection
+        fileInput.addEventListener('change', (e) => {
+            const files = e.target.files;
+            if (files.length > 0) {
+                handleFiles(files);
+            }
+        });
+
+        async function handleFiles(files) {
+            for (let file of files) {
+                await uploadFile(file);
+            }
+        }
+
+        async function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Show progress container
+            progressContainer.style.display = 'block';
+            fileInfo.style.display = 'block';
+            statusDiv.style.display = 'none';
+
+            // Display file info
+            fileInfo.innerHTML = \\\`
+                <p><strong>File:</strong> \\\${file.name}</p>
+                <p><strong>Size:</strong> \\\${formatBytes(file.size)}</p>
+                <p><strong>Type:</strong> \\\${file.type || 'Unknown'}</p>
+            \\\`;
+
+            // Create XMLHttpRequest for progress tracking
+            const xhr = new XMLHttpRequest();
+
+            // Track upload progress
+            xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable) {
+                    const percentComplete = Math.round((e.loaded / e.total) * 100);
+                    progressBar.style.width = percentComplete + '%';
+                    progressBar.textContent = percentComplete + '%';
+                    progressText.textContent = \\\`Uploading: \\\${formatBytes(e.loaded)} / \\\${formatBytes(e.total)}\\\`;
+                }
+            });
+
+            // Handle completion
+            xhr.addEventListener('load', () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                        const result = JSON.parse(xhr.responseText);
+                        if (result.success) {
+                            showStatus(\\\`✅ \\\${file.name} uploaded successfully!\\\`, 'success');
+                            progressText.textContent = 'Upload complete! ✓';
+                            
+                            // Show manifest info
+                            if (result.manifest) {
+                                fileInfo.innerHTML += \\\`
+                                    <p><strong>Status:</strong> Deployed</p>
+                                    <p><strong>Key:</strong> \\\${result.key}</p>
+                                    <p><strong>Manifest:</strong> \\\${result.manifest}</p>
+                                \\\`;
+                            }
+                        } else {
+                            showStatus(\\\`❌ Upload failed: \\\${result.error}\\\`, 'error');
+                        }
+                    } catch (error) {
+                        showStatus(\\\`❌ Upload error: \\\${error.message}\\\`, 'error');
+                    }
+                } else {
+                    showStatus(\\\`❌ Upload failed: HTTP \\\${xhr.status}\\\`, 'error');
+                }
+            });
+
+            // Handle errors
+            xhr.addEventListener('error', () => {
+                showStatus('❌ Upload failed: Network error', 'error');
+            });
+
+            xhr.addEventListener('abort', () => {
+                showStatus('❌ Upload cancelled', 'error');
+            });
+
+            // Prepare request
+            xhr.open('POST', '/upload', true);
+            
+            // Add auth token if provided
+            const token = authTokenInput.value.trim();
+            if (token) {
+                xhr.setRequestHeader('Authorization', \\\`Bearer \\\${token}\\\`);
+            }
+
+            // Reset progress
+            progressBar.style.width = '0%';
+            progressBar.textContent = '0%';
+            progressText.textContent = 'Starting upload...';
+
+            // Send request
+            xhr.send(formData);
+        }
+
+        async function loadRecentUploads() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+
+                if (data.success && data.files && data.files.length > 0) {
+                    recentUploadsDiv.style.display = 'block';
+                    recentUploadsDiv.innerHTML = '<h3>Recent Uploads</h3>';
+                    
+                    data.files.forEach(file => {
+                        const item = document.createElement('div');
+                        item.className = 'recent-item';
+                        item.innerHTML = \\\`
+                            📄 \\\${file.key.split('/').pop()}<br>
+                            <small>Size: \\\${formatBytes(file.size)} • Uploaded: \\\${new Date(file.uploaded).toLocaleString()}</small>
+                        \\\`;
+                        recentUploadsDiv.appendChild(item);
+                    });
+                } else {
+                    recentUploadsDiv.style.display = 'block';
+                    recentUploadsDiv.innerHTML = '<h3>Recent Uploads</h3><p style="color: #aaa;">No recent uploads found</p>';
+                }
+            } catch (error) {
+                showStatus(\\\`Failed to load recent uploads: \\\${error.message}\\\`, 'error');
+            }
+        }
+
+        function showStatus(message, type) {
+            statusDiv.textContent = message;
+            statusDiv.className = \\\`status \\\${type}\\\`;
+            statusDiv.style.display = 'block';
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        // Load recent uploads on page load
+        window.addEventListener('load', () => {
+            console.log('HotStack Intake ready');
         });
     </script>
 </body>

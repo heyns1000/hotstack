@@ -1517,7 +1517,17 @@ function getLandingPageHTML() {
 }
 
 /**
- * Dashboard HTML interface for file management
+ * Dashboard HTML interface for file management - HotStack v2 Design
+ * Features:
+ * - Dark gold-accented theme
+ * - Animated particle background
+ * - Drag-and-drop file upload zone
+ * - Live status console with R2 activity
+ * - Countdown timer
+ * - Global hub cards
+ * - Zero-signup modal
+ * - Referral modal flows
+ * - Metrics/status console
  */
 function getDashboardHTML() {
   return `
@@ -1526,8 +1536,18 @@ function getDashboardHTML() {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HotStack - File Orchestration</title>
+    <title>HotStack™ Dashboard | File Orchestration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --gold-primary: #FFD700;
+            --gold-secondary: #FFA500;
+            --dark-bg: #0d1117;
+            --dark-card: #1a1b20;
+            --border-gold: rgba(255, 215, 0, 0.3);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -1535,241 +1555,736 @@ function getDashboardHTML() {
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', sans-serif;
+            background-color: var(--dark-bg);
+            color: #e2e8f0;
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
+            overflow-x: hidden;
+            position: relative;
         }
 
-        .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            padding: 40px;
-            max-width: 600px;
+        /* Particle Canvas Background */
+        #particleCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
         }
 
-        h1 {
-            color: #667eea;
-            margin-bottom: 10px;
-            font-size: 2.5em;
+        /* Main Container */
+        .dashboard-container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
         }
 
-        .subtitle {
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 0.9em;
-        }
-
-        .upload-area {
-            border: 3px dashed #667eea;
-            border-radius: 15px;
-            padding: 60px 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background: #f8f9ff;
-        }
-
-        .upload-area:hover {
-            border-color: #764ba2;
-            background: #f0f1ff;
-            transform: translateY(-2px);
-        }
-
-        .upload-area.dragover {
-            border-color: #764ba2;
-            background: #e8e9ff;
-            transform: scale(1.02);
-        }
-
-        .upload-icon {
-            font-size: 4em;
-            margin-bottom: 20px;
-        }
-
-        .upload-text {
-            color: #667eea;
-            font-size: 1.2em;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-
-        .upload-hint {
-            color: #999;
-            font-size: 0.9em;
-        }
-
-        #fileInput {
-            display: none;
-        }
-
-        .file-list {
-            margin-top: 30px;
-        }
-
-        .file-item {
-            background: #f8f9ff;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 10px;
+        /* Header */
+        .dashboard-header {
+            background: rgba(26, 27, 32, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-gold);
+            border-radius: 16px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--gold-primary) 0%, var(--gold-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .fire-emoji {
+            display: inline-block;
+            animation: flicker 2s infinite;
+        }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.05); }
+        }
+
+        .countdown-timer {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--gold-primary);
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.7);
+        }
+
+        /* Grid Layout */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--dark-card);
+            border: 1px solid var(--border-gold);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.6);
+            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7), 0 0 25px var(--gold-secondary);
+            border-color: var(--gold-primary);
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--gold-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Upload Zone */
+        .upload-zone {
+            border: 3px dashed var(--border-gold);
+            border-radius: 20px;
+            padding: 4rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 215, 0, 0.05);
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .upload-zone:hover,
+        .upload-zone.dragover {
+            border-color: var(--gold-primary);
+            background: rgba(255, 215, 0, 0.15);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(255, 215, 0, 0.3);
+        }
+
+        .upload-icon {
+            font-size: 5rem;
+            margin-bottom: 1.5rem;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .upload-text {
+            color: var(--gold-primary);
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-hint {
+            color: #aaa;
+            font-size: 1rem;
+        }
+
+        /* Status Console */
+        .status-console {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-gold);
+            border-radius: 12px;
+            padding: 1.5rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .status-item {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: rgba(255, 215, 0, 0.05);
+            border-left: 3px solid var(--gold-primary);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-family: 'Courier New', monospace;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .status-time {
+            color: var(--gold-secondary);
+            font-weight: 600;
+        }
+
+        /* Metrics Cards */
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--gold-primary);
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+        }
+
+        .metric-label {
+            color: #aaa;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Global Hub Cards */
+        .hub-card {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 165, 0, 0.1));
+            border: 1px solid var(--border-gold);
+            border-radius: 12px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .hub-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+            border-color: var(--gold-primary);
+        }
+
+        .hub-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .hub-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--gold-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .hub-description {
+            color: #aaa;
+            font-size: 0.85rem;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--gold-primary), var(--gold-secondary));
+            color: #0d1117;
+            box-shadow: 0 5px 20px rgba(255, 215, 0, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(255, 215, 0, 0.6);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--gold-primary);
+            border: 1px solid var(--border-gold);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 215, 0, 0.1);
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: var(--dark-card);
+            border: 2px solid var(--gold-primary);
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.9);
+            animation: scaleIn 0.3s ease-out;
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0.9); }
+            to { transform: scale(1); }
+        }
+
+        .modal-header {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--gold-primary);
+            margin-bottom: 1rem;
+        }
+
+        .modal-body {
+            color: #e2e8f0;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        /* File List */
+        .file-item {
+            background: rgba(255, 215, 0, 0.05);
+            border: 1px solid var(--border-gold);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .file-item:hover {
+            background: rgba(255, 215, 0, 0.1);
+            border-color: var(--gold-primary);
         }
 
         .file-name {
             font-weight: 600;
-            color: #333;
+            color: var(--gold-primary);
         }
 
-        .file-size {
-            color: #999;
-            font-size: 0.9em;
+        .file-meta {
+            color: #aaa;
+            font-size: 0.85rem;
         }
 
-        .btn {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.9em;
-            transition: all 0.3s ease;
+        /* Progress Bar */
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            overflow: hidden;
+            margin-top: 1rem;
         }
 
-        .btn:hover {
-            background: #764ba2;
-            transform: translateY(-2px);
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--gold-primary), var(--gold-secondary));
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0d1117;
+            font-weight: 700;
+            font-size: 0.85rem;
         }
 
-        .btn-danger {
-            background: #e74c3c;
+        /* Responsive */
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .dashboard-header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
         }
 
-        .btn-danger:hover {
-            background: #c0392b;
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
         }
 
-        .status {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            font-weight: 600;
+        ::-webkit-scrollbar-track {
+            background: var(--dark-card);
         }
 
-        .status.success {
-            background: #d4edda;
-            color: #155724;
+        ::-webkit-scrollbar-thumb {
+            background: var(--gold-primary);
+            border-radius: 4px;
         }
 
-        .status.error {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .back-button-container {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .btn-back {
-            display: inline-block;
-            background: #764ba2;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .btn-back:hover {
-            background: #667eea;
-            transform: translateY(-2px);
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--gold-secondary);
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🔥 HotStack</h1>
-        <p class="subtitle">File Orchestration System - Dashboard</p>
+    <canvas id="particleCanvas"></canvas>
 
-        <div class="back-button-container">
-            <a href="/" class="btn-back">← Back to Landing</a>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <div class="logo">
+                <span class="fire-emoji">🔥</span>
+                HotStack™ Dashboard
+            </div>
+            <div class="countdown-timer" id="countdown">03:00</div>
+            <div style="display: flex; gap: 1rem;">
+                <button class="btn btn-secondary" onclick="window.location.href='/'">← Home</button>
+                <button class="btn btn-primary" onclick="showModal('signup')">Get Started</button>
+            </div>
         </div>
 
-        <div class="upload-area" id="uploadArea">
-            <div class="upload-icon">📁</div>
-            <div class="upload-text">Drop files here or click to upload</div>
-            <div class="upload-hint">Support for any file type</div>
+        <!-- Metrics Row -->
+        <div class="dashboard-grid">
+            <div class="card">
+                <div class="card-title">📊 Total Uploads</div>
+                <div class="metric-value" id="totalUploads">0</div>
+                <div class="metric-label">Files in Storage</div>
+            </div>
+            <div class="card">
+                <div class="card-title">💾 Storage Used</div>
+                <div class="metric-value" id="storageUsed">0 MB</div>
+                <div class="metric-label">R2 Bucket Usage</div>
+            </div>
+            <div class="card">
+                <div class="card-title">⚡ Recent Activity</div>
+                <div class="metric-value" id="recentCount">0</div>
+                <div class="metric-label">Last Hour</div>
+            </div>
         </div>
 
-        <input type="file" id="fileInput" multiple>
+        <!-- Main Content Grid -->
+        <div class="dashboard-grid">
+            <!-- Upload Zone -->
+            <div class="card" style="grid-column: span 2;">
+                <div class="card-title">📦 File Upload Zone</div>
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">Drop files here or click to upload</div>
+                    <div class="upload-hint">Any file type • Any size • Instant upload</div>
+                </div>
+                <input type="file" id="fileInput" multiple style="display: none;">
+                <div id="uploadProgress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill">0%</div>
+                    </div>
+                </div>
+            </div>
 
-        <div id="status"></div>
-        
-        <div class="file-list" id="fileList"></div>
+            <!-- Status Console -->
+            <div class="card">
+                <div class="card-title">🖥️ Live Status Console</div>
+                <div class="status-console" id="statusConsole">
+                    <div class="status-item">
+                        <span class="status-time">[SYSTEM]</span> Dashboard initialized
+                    </div>
+                    <div class="status-item">
+                        <span class="status-time">[R2]</span> Connected to hotstack-intake-bucket
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Global Hubs -->
+        <div class="card">
+            <div class="card-title">🌐 Global Hubs</div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                <div class="hub-card" onclick="showModal('analytics')">
+                    <div class="hub-icon">📈</div>
+                    <div class="hub-title">Analytics</div>
+                    <div class="hub-description">View detailed metrics and insights</div>
+                </div>
+                <div class="hub-card" onclick="showModal('admin')">
+                    <div class="hub-icon">⚙️</div>
+                    <div class="hub-title">Admin Panel</div>
+                    <div class="hub-description">Manage settings and configurations</div>
+                </div>
+                <div class="hub-card" onclick="showModal('account')">
+                    <div class="hub-icon">👤</div>
+                    <div class="hub-title">Account</div>
+                    <div class="hub-description">Profile and account management</div>
+                </div>
+                <div class="hub-card" onclick="showModal('referral')">
+                    <div class="hub-icon">🎁</div>
+                    <div class="hub-title">Referrals</div>
+                    <div class="hub-description">Invite friends and earn rewards</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Files -->
+        <div class="card">
+            <div class="card-title">📄 Recent Files</div>
+            <div id="fileList"></div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" id="signupModal">
+        <div class="modal-content">
+            <div class="modal-header">🚀 Zero-Signup Access</div>
+            <div class="modal-body">
+                <p>Welcome to HotStack™! You can start using the platform immediately with zero-signup required.</p>
+                <p style="margin-top: 1rem;">Simply drag and drop files to upload. No account needed!</p>
+                <p style="margin-top: 1rem; color: var(--gold-primary);">Create an account later to unlock premium features.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('signup')">Close</button>
+                <button class="btn btn-primary" onclick="closeModal('signup')">Start Uploading</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="analyticsModal">
+        <div class="modal-content">
+            <div class="modal-header">📈 Analytics Hub</div>
+            <div class="modal-body">
+                <p>Advanced analytics and reporting features coming soon!</p>
+                <p style="margin-top: 1rem;">Track upload trends, storage usage, and performance metrics.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="closeModal('analytics')">Got it</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="adminModal">
+        <div class="modal-content">
+            <div class="modal-header">⚙️ Admin Panel</div>
+            <div class="modal-body">
+                <p>Administrative controls and settings will be available here.</p>
+                <p style="margin-top: 1rem;">Manage users, permissions, and system configuration.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="closeModal('admin')">Got it</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="accountModal">
+        <div class="modal-content">
+            <div class="modal-header">👤 Account Management</div>
+            <div class="modal-body">
+                <p>Manage your profile, preferences, and account settings.</p>
+                <p style="margin-top: 1rem;">Update your information and view your activity history.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="closeModal('account')">Got it</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="referralModal">
+        <div class="modal-content">
+            <div class="modal-header">🎁 Referral Program</div>
+            <div class="modal-body">
+                <p>Share HotStack™ with friends and earn rewards!</p>
+                <p style="margin-top: 1rem;">Your referral link: <code style="color: var(--gold-primary);">https://hotstack.faa.zone?ref=YOUR_CODE</code></p>
+                <p style="margin-top: 1rem;">Earn premium features for every successful referral.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="copyReferralLink()">Copy Link</button>
+                <button class="btn btn-primary" onclick="closeModal('referral')">Close</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        const uploadArea = document.getElementById('uploadArea');
+        // Particle Animation
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 3 + 1;
+                this.speedY = Math.random() * 2 + 0.5;
+                this.speedX = Math.random() * 1 - 0.5;
+                this.opacity = Math.random() * 0.5 + 0.3;
+            }
+
+            update() {
+                this.y += this.speedY;
+                this.x += this.speedX;
+
+                if (this.y > canvas.height) {
+                    this.y = -10;
+                    this.x = Math.random() * canvas.width;
+                }
+            }
+
+            draw() {
+                ctx.fillStyle = \`rgba(255, 215, 0, \${this.opacity})\`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        const particles = [];
+        for (let i = 0; i < 100; i++) {
+            particles.push(new Particle());
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+
+            requestAnimationFrame(animateParticles);
+        }
+
+        animateParticles();
+
+        // Countdown Timer
+        let timeLeft = 180;
+        const countdownEl = document.getElementById('countdown');
+
+        function updateCountdown() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            countdownEl.textContent = \`\${minutes.toString().padStart(2, '0')}:\${seconds.toString().padStart(2, '0')}\`;
+            
+            if (timeLeft > 0) {
+                timeLeft--;
+            } else {
+                timeLeft = 180;
+            }
+        }
+
+        setInterval(updateCountdown, 1000);
+
+        // Modal Functions
+        function showModal(type) {
+            const modal = document.getElementById(type + 'Modal');
+            if (modal) {
+                modal.classList.add('active');
+            }
+        }
+
+        function closeModal(type) {
+            const modal = document.getElementById(type + 'Modal');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        }
+
+        function copyReferralLink() {
+            navigator.clipboard.writeText('https://hotstack.faa.zone?ref=YOUR_CODE');
+            addStatusLog('[REFERRAL] Link copied to clipboard');
+        }
+
+        // Status Console
+        function addStatusLog(message) {
+            const console = document.getElementById('statusConsole');
+            const now = new Date();
+            const time = now.toLocaleTimeString();
+            
+            const item = document.createElement('div');
+            item.className = 'status-item';
+            item.innerHTML = \`<span class="status-time">[\${time}]</span> \${message}\`;
+            
+            console.insertBefore(item, console.firstChild);
+            
+            // Keep only last 10 items
+            while (console.children.length > 10) {
+                console.removeChild(console.lastChild);
+            }
+        }
+
+        // File Upload
+        const uploadZone = document.getElementById('uploadZone');
         const fileInput = document.getElementById('fileInput');
-        const status = document.getElementById('status');
-        const fileList = document.getElementById('fileList');
+        const uploadProgress = document.getElementById('uploadProgress');
+        const progressFill = document.getElementById('progressFill');
 
-        // Click to upload
-        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadZone.addEventListener('click', () => fileInput.click());
 
-        // Drag and drop
-        uploadArea.addEventListener('dragover', (e) => {
+        uploadZone.addEventListener('dragover', (e) => {
             e.preventDefault();
-            uploadArea.classList.add('dragover');
+            uploadZone.classList.add('dragover');
         });
 
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragover');
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
         });
 
-        uploadArea.addEventListener('drop', (e) => {
+        uploadZone.addEventListener('drop', (e) => {
             e.preventDefault();
-            uploadArea.classList.remove('dragover');
+            uploadZone.classList.remove('dragover');
             const files = e.dataTransfer.files;
-            handleFiles(files);
+            if (files.length > 0) {
+                handleFiles(files);
+            }
         });
 
-        // File selection
         fileInput.addEventListener('change', (e) => {
             const files = e.target.files;
-            handleFiles(files);
+            if (files.length > 0) {
+                handleFiles(files);
+            }
         });
 
-        // Handle file upload
         async function handleFiles(files) {
             for (let file of files) {
                 await uploadFile(file);
             }
+            loadMetrics();
             loadFiles();
         }
 
@@ -1777,55 +2292,100 @@ function getDashboardHTML() {
             const formData = new FormData();
             formData.append('file', file);
 
-            showStatus('Uploading...', 'loading');
+            uploadProgress.style.display = 'block';
+            addStatusLog(\`[UPLOAD] Starting: \${file.name}\`);
 
-            try {
-                const response = await fetch('/upload', {
-                    method: 'POST',
-                    body: formData,
-                });
+            const xhr = new XMLHttpRequest();
 
-                const result = await response.json();
-
-                if (result.success) {
-                    showStatus(\`✅ \${file.name} uploaded successfully!\`, 'success');
-                } else {
-                    showStatus(\`❌ Upload failed: \${result.error}\`, 'error');
+            xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable) {
+                    const percentComplete = Math.round((e.loaded / e.total) * 100);
+                    progressFill.style.width = percentComplete + '%';
+                    progressFill.textContent = percentComplete + '%';
                 }
-            } catch (error) {
-                showStatus(\`❌ Upload error: \${error.message}\`, 'error');
-            }
+            });
+
+            xhr.addEventListener('load', () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                        const result = JSON.parse(xhr.responseText);
+                        if (result.success) {
+                            addStatusLog(\`[SUCCESS] ✅ \${file.name} uploaded\`);
+                            setTimeout(() => {
+                                uploadProgress.style.display = 'none';
+                                progressFill.style.width = '0%';
+                                progressFill.textContent = '0%';
+                            }, 2000);
+                        }
+                    } catch (error) {
+                        addStatusLog(\`[ERROR] ❌ Upload failed: \${error.message}\`);
+                    }
+                } else {
+                    addStatusLog(\`[ERROR] ❌ HTTP \${xhr.status}\`);
+                }
+            });
+
+            xhr.addEventListener('error', () => {
+                addStatusLog('[ERROR] ❌ Network error');
+            });
+
+            xhr.open('POST', '/upload', true);
+            xhr.send(formData);
         }
 
-        // Load and display files
-        async function loadFiles() {
+        // Load Metrics
+        async function loadMetrics() {
             try {
                 const response = await fetch('/files');
                 const data = await response.json();
 
-                if (data.files && data.files.length > 0) {
-                    fileList.innerHTML = '<h3>Your Files:</h3>';
+                if (data.files) {
+                    document.getElementById('totalUploads').textContent = data.files.length;
+                    
+                    const totalSize = data.files.reduce((sum, file) => sum + (file.size || 0), 0);
+                    document.getElementById('storageUsed').textContent = formatBytes(totalSize);
+                    
+                    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+                    const recentFiles = data.files.filter(file => new Date(file.uploaded) > oneHourAgo);
+                    document.getElementById('recentCount').textContent = recentFiles.length;
+                }
+            } catch (error) {
+                console.error('Failed to load metrics:', error);
+            }
+        }
+
+        // Load Files
+        async function loadFiles() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+
+                const fileList = document.getElementById('fileList');
+
+                if (data.success && data.files && data.files.length > 0) {
+                    fileList.innerHTML = '';
                     data.files.forEach(file => {
-                        const fileItem = document.createElement('div');
-                        fileItem.className = 'file-item';
-                        fileItem.innerHTML = \`
+                        const item = document.createElement('div');
+                        item.className = 'file-item';
+                        const fileName = file.key.split('/').pop();
+                        item.innerHTML = \`
                             <div>
-                                <div class="file-name">📄 \${file.key}</div>
-                                <div class="file-size">\${formatBytes(file.size)}</div>
+                                <div class="file-name">📄 \${fileName}</div>
+                                <div class="file-meta">\${formatBytes(file.size)} • \${new Date(file.uploaded).toLocaleString()}</div>
                             </div>
-                            <button class="btn btn-danger" onclick="deleteFile('\${file.key}')">Delete</button>
+                            <button class="btn btn-secondary" onclick="deleteFile('\${file.key}')">Delete</button>
                         \`;
-                        fileList.appendChild(fileItem);
+                        fileList.appendChild(item);
                     });
                 } else {
-                    fileList.innerHTML = '';
+                    fileList.innerHTML = '<div style="color: #aaa; text-align: center; padding: 2rem;">No files uploaded yet</div>';
                 }
             } catch (error) {
                 console.error('Failed to load files:', error);
             }
         }
 
-        // Delete file
+        // Delete File
         async function deleteFile(filename) {
             if (!confirm(\`Delete \${filename}?\`)) return;
 
@@ -1837,33 +2397,37 @@ function getDashboardHTML() {
                 const result = await response.json();
 
                 if (result.success) {
-                    showStatus(\`✅ \${filename} deleted\`, 'success');
+                    addStatusLog(\`[DELETE] 🗑️ \${filename} deleted\`);
                     loadFiles();
+                    loadMetrics();
                 } else {
-                    showStatus(\`❌ Delete failed: \${result.error}\`, 'error');
+                    addStatusLog(\`[ERROR] ❌ Delete failed\`);
                 }
             } catch (error) {
-                showStatus(\`❌ Delete error: \${error.message}\`, 'error');
-            }
-        }
-
-        function showStatus(message, type) {
-            status.innerHTML = \`<div class="status \${type}">\${message}</div>\`;
-            if (type !== 'loading') {
-                setTimeout(() => status.innerHTML = '', 3000);
+                addStatusLog(\`[ERROR] ❌ \${error.message}\`);
             }
         }
 
         function formatBytes(bytes) {
             if (bytes === 0) return '0 Bytes';
             const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
         }
 
-        // Load files on page load
-        loadFiles();
+        // Initialize
+        window.addEventListener('load', () => {
+            loadMetrics();
+            loadFiles();
+            addStatusLog('[INIT] Dashboard loaded successfully');
+        });
+
+        // Auto-refresh metrics every 30 seconds
+        setInterval(() => {
+            loadMetrics();
+            loadFiles();
+        }, 30000);
     </script>
 </body>
 </html>
@@ -2088,7 +2652,7 @@ if (typeof module !== 'undefined' && module.exports) {
  * Auth test page HTML
  */
 function getAuthTestHTML() {
-  return \`<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -2443,7 +3007,7 @@ function getAuthTestHTML() {
         });
     </script>
 </body>
-</html>\`;
+</html>`;
 }
 
 /**
@@ -2917,5 +3481,5 @@ function getIntakeHTML() {
         });
     </script>
 </body>
-</html>\`;
+</html>`;
 }

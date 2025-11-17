@@ -1,17 +1,22 @@
 # 🔥 HotStack - File Orchestration System
 
-**Live at:** https://hotstack.faa.zone
+**Live at:** https://hotstack.faa.zone  
+**Intake Portal:** https://hotstack.faa.zone/intake
 
 A high-performance file orchestration system built on Cloudflare Workers with R2 storage integration.
 
 ## 🌟 Features
 
-- **Drag & Drop Upload Interface** - Beautiful, intuitive web UI
+- **Secure File Upload** - Bearer token authentication for protected uploads
+- **Drag & Drop Interface** - Beautiful, intuitive web UI with real-time progress
+- **Multipart Upload Support** - Handles large files efficiently using streaming
 - **R2 Storage Integration** - Scalable object storage with Cloudflare R2
+- **Auto-Deploy Manifests** - Automatic manifest creation for Fruitful sync
 - **Queue Processing** - Asynchronous file processing pipeline
 - **REST API** - Complete API for file management
 - **Auto-Deployment** - GitHub Actions CI/CD pipeline
 - **Production Ready** - CORS enabled, error handling, and logging
+- **User Authentication** - D1 database integration with bcrypt password hashing
 
 ## 🚀 Quick Start
 
@@ -44,6 +49,16 @@ npm run deploy:production
 npm run deploy:staging
 ```
 
+### Set up R2 Bucket
+
+```bash
+# Create the R2 bucket
+wrangler r2 bucket create hotstack-intake-bucket
+
+# Set up authentication secret (optional)
+wrangler secret put AUTH_SECRET
+```
+
 ## 📁 Project Structure
 
 ```
@@ -51,10 +66,19 @@ hotstack/
 ├── .github/
 │   └── workflows/
 │       └── deploy.yml          # GitHub Actions workflow
+├── public/
+│   ├── hotstack-intake.html    # Intake portal (standalone)
+│   ├── index.html              # Landing page
+│   └── js/
+│       └── auth.js             # Authentication client
 ├── src/
-│   └── index.js                # Main worker code
+│   ├── index.js                # Main worker code
+│   ├── worker.js               # Standalone secure upload worker
+│   └── db/
+│       └── users.js            # User database functions
 ├── wrangler.toml               # Cloudflare configuration
 ├── package.json                # Dependencies
+├── schema.sql                  # Database schema
 ├── .gitignore                  # Git ignore rules
 └── README.md                   # Documentation
 ```
@@ -69,11 +93,23 @@ Edit `wrangler.toml`:
 name = "hotstack-worker"
 main = "src/index.js"
 account_id = "ad41fcfe1a84b27c62cc5cc9d590720e"
-route = "hotstack.faa.zone/*"
+
+[[routes]]
+pattern = "hotstack.faa.zone/*"
+zone_name = "faa.zone"
+
+[[routes]]
+pattern = "fruitful.faa.zone/*"
+zone_name = "faa.zone"
 
 [[r2_buckets]]
 binding = "HOTSTACK_BUCKET"
-bucket_name = "hotstack-bucket"
+bucket_name = "hotstack-intake-bucket"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "hotstack-db"
+database_id = "YOUR_DATABASE_ID"
 ```
 
 ### Environment Variables
@@ -82,19 +118,74 @@ Required secrets in GitHub:
 - `CLOUDFLARE_API_TOKEN` - Your Cloudflare API token
 - `CLOUDFLARE_ACCOUNT_ID` - Your Cloudflare account ID
 
+Optional secrets (set with `wrangler secret put`):
+- `AUTH_SECRET` - Bearer token for secure uploads (optional but recommended)
+
+## 🌐 Web Interfaces
+
+### HotStack Intake Portal (`/intake`)
+A dedicated secure file upload portal with:
+- Real-time progress bar showing upload percentage
+- Drag-and-drop file upload
+- Optional Bearer token authentication
+- Display of recent uploads
+- Multipart upload support for large files
+- Auto-deploy manifest generation
+
+### Main Landing Page (`/`)
+HotStack™ landing page with:
+- Animated particle background
+- Quick upload interface
+- Feature highlights
+- Dashboard access
+
+### Dashboard (`/dashboard`)
+File management interface with:
+- Upload files
+- List all uploaded files
+- Delete files
+- View file metadata
+
+### Fruitful Portal (`fruitful.faa.zone`)
+Fruitful integration page with:
+- User authentication (signup/signin)
+- File upload with authentication
+- Recent uploads display
+
 ## 📡 API Endpoints
 
-### Upload File
+### Upload File (Enhanced with Multipart Support)
 ```bash
 POST /upload
 Content-Type: multipart/form-data
+Authorization: Bearer YOUR_TOKEN (optional)
 
 # Response
 {
   "success": true,
+  "key": "hotstack/1699999999999-example.pdf",
   "filename": "example.pdf",
   "size": 1024,
+  "manifest": "hotstack/1699999999999-example.pdf-manifest.json",
   "message": "File uploaded successfully"
+}
+```
+
+### Get Upload Status
+```bash
+GET /status
+
+# Response
+{
+  "success": true,
+  "files": [
+    {
+      "key": "hotstack/1699999999999-example.pdf",
+      "uploaded": "2025-01-01T00:00:00.000Z",
+      "size": 1024
+    }
+  ],
+  "count": 1
 }
 ```
 
@@ -161,6 +252,67 @@ Content-Type: application/json
   "filename": "example.pdf"
 }
 ```
+
+## 🔐 Security Features
+
+### Bearer Token Authentication
+Upload endpoints support optional Bearer token authentication. When `AUTH_SECRET` is configured, the worker validates the Authorization header:
+
+```bash
+curl -X POST https://hotstack.faa.zone/upload \
+  -H "Authorization: Bearer YOUR_SECRET_TOKEN" \
+  -F "file=@document.pdf"
+```
+
+### Password Hashing
+User passwords are securely hashed using bcryptjs with salt rounds before storage in the D1 database.
+
+### Audit Logging
+All authentication events (signup, signin, signout) are logged with:
+- User ID
+- Action type
+- IP address
+- User agent
+- Timestamp
+
+## ⚡ Technical Improvements
+
+### Multipart Upload Support
+The worker now uses streaming for file uploads instead of buffering the entire file in memory:
+- Handles files of any size efficiently
+- Reduced memory footprint
+- Better performance for large files
+
+**Before:**
+```javascript
+const arrayBuffer = await file.arrayBuffer();  // Loads entire file in memory
+await env.HOTSTACK_BUCKET.put(filename, arrayBuffer);
+```
+
+**After:**
+```javascript
+await env.HOTSTACK_BUCKET.put(key, file.stream());  // Streams directly
+```
+
+### Auto-Deploy Manifests
+Each uploaded file automatically generates a manifest file for synchronization:
+
+```json
+{
+  "status": "deployed",
+  "timestamp": "2025-01-01T00:00:00.000Z",
+  "path": "hotstack/1699999999999-example.pdf",
+  "originalName": "example.pdf",
+  "size": 1024,
+  "contentType": "application/pdf"
+}
+```
+
+### Real-time Progress Tracking
+The intake portal uses XMLHttpRequest with progress events to show real-time upload progress:
+- Percentage complete
+- Bytes uploaded / Total bytes
+- Upload speed indication
 
 ## 🔄 Auto-Deployment with GitHub Actions
 

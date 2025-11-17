@@ -95,6 +95,11 @@ export default {
         return await handleProcessFile(request, env, corsHeaders);
       }
 
+      // Route: Build endpoint - Generate HTML from prompt and file
+      if (path === '/api/build' && request.method === 'POST') {
+        return await handleBuild(request, env, corsHeaders);
+      }
+
       // Route: Landing page
       if (path === '/' || path === '/index.html') {
         // Serve fruitful page for fruitful.faa.zone
@@ -773,6 +778,227 @@ async function handleProcessFile(request, env, corsHeaders) {
 }
 
 /**
+ * Handle /api/build endpoint
+ * Accepts a prompt and an uploaded file (PDF/HTML)
+ * Extracts text content from the file
+ * Generates a simple HTML page from a template using prompt+extracted text
+ * Note: Full Cloudflare Pages deployment requires additional setup
+ */
+async function handleBuild(request, env, corsHeaders) {
+  try {
+    const formData = await request.formData();
+    const prompt = formData.get('prompt');
+    const file = formData.get('file');
+
+    if (!prompt || !file) {
+      return new Response(JSON.stringify({ 
+        error: 'Both prompt and file are required' 
+      }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
+    // Extract text content from file
+    let extractedText = '';
+    const fileType = file.type;
+    const fileName = file.name;
+
+    if (fileType === 'text/html' || fileName.endsWith('.html')) {
+      // For HTML files, read as text
+      extractedText = await file.text();
+      // Strip HTML tags to get text content
+      extractedText = extractedText.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    } else if (fileType === 'application/pdf' || fileName.endsWith('.pdf')) {
+      // For PDF files, we'd need a PDF parser library
+      // For now, we'll use a placeholder since we don't have pdf-parse in Workers
+      extractedText = '[PDF content extraction requires additional library - placeholder text]';
+    } else {
+      // For other files, try to read as text
+      try {
+        extractedText = await file.text();
+      } catch (e) {
+        extractedText = '[Binary file - unable to extract text content]';
+      }
+    }
+
+    // Generate HTML from template
+    const generatedHTML = generateHTMLTemplate(prompt, extractedText, fileName);
+
+    // Store generated HTML in R2
+    const key = `builds/${Date.now()}-${fileName.replace(/\.[^.]+$/, '')}.html`;
+    await env.HOTSTACK_BUCKET.put(key, generatedHTML, {
+      httpMetadata: {
+        contentType: 'text/html',
+      },
+      customMetadata: {
+        prompt: prompt.substring(0, 200), // Store first 200 chars of prompt
+        sourceFile: fileName,
+        buildDate: new Date().toISOString(),
+      },
+    });
+
+    // Return response with build info
+    return new Response(JSON.stringify({
+      success: true,
+      message: 'HTML page generated successfully',
+      buildKey: key,
+      sourceFile: fileName,
+      extractedTextLength: extractedText.length,
+      viewUrl: `/file/${key}`,
+      note: 'Full Cloudflare Pages deployment requires additional configuration',
+    }), {
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+    });
+
+  } catch (error) {
+    console.error('Build error:', error);
+    return new Response(JSON.stringify({ 
+      error: 'Build failed', 
+      message: error.message 
+    }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+    });
+  }
+}
+
+/**
+ * Generate HTML template from prompt and extracted text
+ */
+function generateHTMLTemplate(prompt, extractedText, sourceFileName) {
+  // Create a simple, clean HTML page based on the prompt and extracted content
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generated from: ${sourceFileName}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .prompt-section {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 4px solid #667eea;
+        }
+        .prompt-label {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            font-size: 0.9em;
+            letter-spacing: 1px;
+        }
+        .content-section {
+            margin-top: 30px;
+        }
+        .content-text {
+            color: #333;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 600px;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 10px;
+        }
+        .meta-info {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 0.9em;
+            color: #666;
+        }
+        .meta-info p {
+            margin: 5px 0;
+        }
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            color: #666;
+            font-size: 0.9em;
+        }
+        footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 Generated Content</h1>
+        
+        <div class="prompt-section">
+            <div class="prompt-label">User Prompt</div>
+            <p>${escapeHtml(prompt)}</p>
+        </div>
+
+        <div class="content-section">
+            <h2>Extracted Content</h2>
+            <div class="content-text">${escapeHtml(extractedText.substring(0, 5000))}${extractedText.length > 5000 ? '\n\n... (content truncated)' : ''}</div>
+        </div>
+
+        <div class="meta-info">
+            <p><strong>Source File:</strong> ${escapeHtml(sourceFileName)}</p>
+            <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+            <p><strong>Content Length:</strong> ${extractedText.length} characters</p>
+        </div>
+
+        <footer>
+            <p>Generated by <a href="https://hotstack.faa.zone">HotStack™</a> - Omnidrop Your Digital Presence</p>
+        </footer>
+    </div>
+</body>
+</html>`;
+}
+
+/**
+ * Escape HTML special characters
+ */
+function escapeHtml(text) {
+  const map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+/**
  * Fruitful page HTML with HotStack section
  */
 function getFruitfulHTML() {
@@ -1157,11 +1383,11 @@ function getFruitfulHTML() {
 }
 
 /**
- * Landing page HTML with HotStack branding
+ * Landing page HTML with HotStack branding - Dark Gold Theme
+ * Features dropzone with XHR upload to /api/upload and status console
  */
 function getLandingPageHTML() {
-  return `
-<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1199,21 +1425,21 @@ function getLandingPageHTML() {
         .container {
             background: rgba(20, 20, 30, 0.95);
             border-radius: 30px;
-            box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 50px rgba(255, 215, 0, 0.2);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 50px rgba(218, 165, 32, 0.2);
             padding: 60px 50px;
             max-width: 700px;
             width: 100%;
             position: relative;
             z-index: 1;
-            border: 2px solid rgba(255, 215, 0, 0.3);
+            border: 2px solid rgba(218, 165, 32, 0.3);
         }
 
         h1 {
-            color: #FFD700;
+            color: #DAA520;
             margin-bottom: 10px;
             font-size: 3.5em;
             text-align: center;
-            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            text-shadow: 0 0 20px rgba(218, 165, 32, 0.5);
         }
 
         .fire-emoji {
@@ -1227,7 +1453,7 @@ function getLandingPageHTML() {
         }
 
         .tagline {
-            color: #FFD700;
+            color: #DAA520;
             margin-bottom: 30px;
             font-size: 1.3em;
             text-align: center;
@@ -1239,9 +1465,9 @@ function getLandingPageHTML() {
             text-align: center;
             margin-bottom: 40px;
             font-size: 2.5em;
-            color: #FFD700;
+            color: #DAA520;
             font-weight: bold;
-            text-shadow: 0 0 15px rgba(255, 215, 0, 0.7);
+            text-shadow: 0 0 15px rgba(218, 165, 32, 0.7);
             font-family: 'Courier New', monospace;
         }
 
@@ -1261,30 +1487,30 @@ function getLandingPageHTML() {
             content: '⚡';
             margin-right: 15px;
             font-size: 1.3em;
-            color: #FFD700;
+            color: #DAA520;
         }
 
         .upload-area {
-            border: 3px dashed #FFD700;
+            border: 3px dashed #DAA520;
             border-radius: 20px;
             padding: 50px 20px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
-            background: rgba(255, 215, 0, 0.05);
+            background: rgba(218, 165, 32, 0.05);
             margin: 30px 0;
         }
 
         .upload-area:hover {
-            border-color: #FFA500;
-            background: rgba(255, 215, 0, 0.15);
+            border-color: #B8860B;
+            background: rgba(218, 165, 32, 0.15);
             transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);
+            box-shadow: 0 10px 30px rgba(218, 165, 32, 0.3);
         }
 
         .upload-area.dragover {
-            border-color: #FFA500;
-            background: rgba(255, 215, 0, 0.2);
+            border-color: #B8860B;
+            background: rgba(218, 165, 32, 0.2);
             transform: scale(1.02);
         }
 
@@ -1294,7 +1520,7 @@ function getLandingPageHTML() {
         }
 
         .upload-text {
-            color: #FFD700;
+            color: #DAA520;
             font-size: 1.3em;
             font-weight: 600;
             margin-bottom: 10px;
@@ -1310,7 +1536,7 @@ function getLandingPageHTML() {
         }
 
         .btn {
-            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            background: linear-gradient(135deg, #DAA520 0%, #B8860B 100%);
             color: #1a1a2e;
             border: none;
             padding: 15px 35px;
@@ -1322,44 +1548,50 @@ function getLandingPageHTML() {
             display: inline-block;
             text-decoration: none;
             margin-top: 20px;
-            box-shadow: 0 5px 20px rgba(255, 215, 0, 0.4);
+            box-shadow: 0 5px 20px rgba(218, 165, 32, 0.4);
         }
 
         .btn:hover {
             transform: translateY(-3px);
-            box-shadow: 0 8px 30px rgba(255, 215, 0, 0.6);
+            box-shadow: 0 8px 30px rgba(218, 165, 32, 0.6);
         }
 
         .btn-center {
             text-align: center;
         }
 
-        .status {
+        .status-console {
             margin-top: 20px;
             padding: 15px;
+            background: rgba(0, 0, 0, 0.4);
             border-radius: 10px;
-            text-align: center;
-            font-weight: 600;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            border: 1px solid rgba(218, 165, 32, 0.2);
         }
 
-        .status.success {
-            background: rgba(0, 255, 0, 0.2);
-            color: #0f0;
-            border: 1px solid #0f0;
+        .status-log {
+            color: #DAA520;
+            margin: 5px 0;
+            padding: 3px 0;
         }
 
-        .status.error {
-            background: rgba(255, 0, 0, 0.2);
-            color: #f00;
-            border: 1px solid #f00;
+        .status-log.success {
+            color: #4caf50;
+        }
+
+        .status-log.error {
+            color: #f44336;
         }
 
         .loading {
             display: inline-block;
             width: 20px;
             height: 20px;
-            border: 3px solid rgba(255, 215, 0, 0.3);
-            border-top: 3px solid #FFD700;
+            border: 3px solid rgba(218, 165, 32, 0.3);
+            border-top: 3px solid #DAA520;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -1367,6 +1599,28 @@ function getLandingPageHTML() {
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 15px 0;
+            display: none;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #DAA520 0%, #B8860B 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1a1a2e;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -1394,7 +1648,13 @@ function getLandingPageHTML() {
 
         <input type="file" id="fileInput" multiple>
 
-        <div id="status"></div>
+        <div class="progress-bar" id="progressBar">
+            <div class="progress-fill" id="progressFill">0%</div>
+        </div>
+
+        <div class="status-console" id="statusConsole">
+            <div class="status-log">[SYSTEM] Ready to upload files...</div>
+        </div>
 
         <div class="btn-center">
             <a href="/dashboard" class="btn">Enter Dashboard →</a>
@@ -1453,7 +1713,7 @@ function getLandingPageHTML() {
             }
 
             draw() {
-                ctx.fillStyle = \`rgba(255, 215, 0, \${this.opacity})\`;
+                ctx.fillStyle = \`rgba(218, 165, 32, \${this.opacity})\`;
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                 ctx.fill();
@@ -1478,10 +1738,30 @@ function getLandingPageHTML() {
 
         animateParticles();
 
+        // Status Console Logger
+        function statusLog(message, type = 'info') {
+            const console = document.getElementById('statusConsole');
+            const now = new Date();
+            const time = now.toLocaleTimeString();
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = \`status-log \${type}\`;
+            logEntry.textContent = \`[\${time}] \${message}\`;
+            
+            console.appendChild(logEntry);
+            console.scrollTop = console.scrollHeight;
+            
+            // Keep only last 20 entries
+            while (console.children.length > 20) {
+                console.removeChild(console.firstChild);
+            }
+        }
+
         // Upload functionality
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
-        const status = document.getElementById('status');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
 
         uploadArea.addEventListener('click', () => fileInput.click());
 
@@ -1516,51 +1796,65 @@ function getLandingPageHTML() {
             const formData = new FormData();
             formData.append('file', file);
 
-            showStatus('Uploading...', 'loading');
+            statusLog(\`Starting upload: \${file.name}\`, 'info');
+            progressBar.style.display = 'block';
 
-            try {
-                const response = await fetch('/api/upload', {
-                    method: 'POST',
-                    body: formData,
-                });
+            // Create XMLHttpRequest for progress tracking
+            const xhr = new XMLHttpRequest();
 
-                const result = await response.json();
-
-                if (result.success) {
-                    showStatus(\`✅ \${file.name} uploaded successfully!\`, 'success');
-                } else {
-                    showStatus(\`❌ Upload failed: \${result.error}\`, 'error');
+            // Track upload progress
+            xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable) {
+                    const percentComplete = Math.round((e.loaded / e.total) * 100);
+                    progressFill.style.width = percentComplete + '%';
+                    progressFill.textContent = percentComplete + '%';
                 }
-            } catch (error) {
-                showStatus(\`❌ Upload error: \${error.message}\`, 'error');
-            }
-        }
+            });
 
-        function showStatus(message, type) {
-            status.innerHTML = \`<div class="status \${type}">\${message}</div>\`;
-            if (type !== 'loading') {
-                setTimeout(() => status.innerHTML = '', 3000);
-            }
+            // Handle completion
+            xhr.addEventListener('load', () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                        const result = JSON.parse(xhr.responseText);
+                        if (result.success) {
+                            statusLog(\`✅ \${file.name} uploaded successfully!\`, 'success');
+                            setTimeout(() => {
+                                progressBar.style.display = 'none';
+                                progressFill.style.width = '0%';
+                            }, 2000);
+                        } else {
+                            statusLog(\`❌ Upload failed: \${result.error}\`, 'error');
+                            progressBar.style.display = 'none';
+                        }
+                    } catch (error) {
+                        statusLog(\`❌ Upload error: \${error.message}\`, 'error');
+                        progressBar.style.display = 'none';
+                    }
+                } else {
+                    statusLog(\`❌ Upload failed: HTTP \${xhr.status}\`, 'error');
+                    progressBar.style.display = 'none';
+                }
+            });
+
+            // Handle errors
+            xhr.addEventListener('error', () => {
+                statusLog('❌ Network error during upload', 'error');
+                progressBar.style.display = 'none';
+            });
+
+            xhr.addEventListener('abort', () => {
+                statusLog('❌ Upload cancelled', 'error');
+                progressBar.style.display = 'none';
+            });
+
+            // Open connection and send
+            xhr.open('POST', '/api/upload', true);
+            xhr.send(formData);
         }
     </script>
 </body>
-</html>
-  `;
+</html>`;
 }
-
-/**
- * Dashboard HTML interface for file management - HotStack v2 Design
- * Features:
- * - Dark gold-accented theme
- * - Animated particle background
- * - Drag-and-drop file upload zone
- * - Live status console with R2 activity
- * - Countdown timer
- * - Global hub cards
- * - Zero-signup modal
- * - Referral modal flows
- * - Metrics/status console
- */
 function getDashboardHTML() {
   return `
 <!DOCTYPE html>

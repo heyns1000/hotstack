@@ -58,30 +58,30 @@ export default {
         return await handleGetMe(request, env, corsHeaders);
       }
 
-      // Route: Upload file to R2
-      if (path === '/upload' && request.method === 'POST') {
+      // Route: Upload file to R2 (support both /upload and /api/upload)
+      if ((path === '/upload' || path === '/api/upload') && request.method === 'POST') {
         return await handleUpload(request, env, corsHeaders);
       }
 
-      // Route: Upload status (recent uploads)
-      if (path === '/status' && request.method === 'GET') {
+      // Route: Upload status (recent uploads) (support both /status and /api/status)
+      if ((path === '/status' || path === '/api/status') && request.method === 'GET') {
         return await handleUploadStatus(env, corsHeaders);
       }
 
-      // Route: List files in R2
-      if (path === '/files' && request.method === 'GET') {
+      // Route: List files in R2 (support both /files and /api/files)
+      if ((path === '/files' || path === '/api/files') && request.method === 'GET') {
         return await handleListFiles(env, corsHeaders);
       }
 
-      // Route: Get specific file from R2
-      if (path.startsWith('/file/') && request.method === 'GET') {
-        const filename = path.slice(6);
+      // Route: Get specific file from R2 (support both /file/ and /api/file/)
+      if ((path.startsWith('/file/') || path.startsWith('/api/file/')) && request.method === 'GET') {
+        const filename = path.startsWith('/api/file/') ? path.slice(10) : path.slice(6);
         return await handleGetFile(filename, env, corsHeaders);
       }
 
-      // Route: Delete file from R2
-      if (path.startsWith('/file/') && request.method === 'DELETE') {
-        const filename = path.slice(6);
+      // Route: Delete file from R2 (support both /file/ and /api/file/)
+      if ((path.startsWith('/file/') || path.startsWith('/api/file/')) && request.method === 'DELETE') {
+        const filename = path.startsWith('/api/file/') ? path.slice(10) : path.slice(6);
         return await handleDeleteFile(filename, env, corsHeaders);
       }
 
@@ -620,6 +620,7 @@ async function handleListFiles(env, corsHeaders) {
 
 /**
  * Get a specific file from R2 bucket
+ * Enhanced with proper headers and encoding for downloads
  */
 async function handleGetFile(filename, env, corsHeaders) {
   try {
@@ -632,9 +633,14 @@ async function handleGetFile(filename, env, corsHeaders) {
       });
     }
 
+    // Extract original filename from metadata or key
+    const originalName = object.customMetadata?.originalName || filename.split('/').pop();
+    
     const headers = {
-      'Content-Type': object.httpMetadata.contentType || 'application/octet-stream',
+      'Content-Type': object.httpMetadata?.contentType || 'application/octet-stream',
       'Content-Length': object.size,
+      'Content-Disposition': `attachment; filename="${encodeURIComponent(originalName)}"`,
+      'Cache-Control': 'public, max-age=3600',
       ...corsHeaders,
     };
 
@@ -653,19 +659,45 @@ async function handleGetFile(filename, env, corsHeaders) {
 
 /**
  * Delete a file from R2 bucket
+ * Enhanced with better error handling and audit support
  */
 async function handleDeleteFile(filename, env, corsHeaders) {
   try {
+    // Check if file exists first
+    const object = await env.HOTSTACK_BUCKET.head(filename);
+    
+    if (!object) {
+      return new Response(JSON.stringify({
+        error: 'File not found',
+        filename,
+      }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
+    // Delete the file
     await env.HOTSTACK_BUCKET.delete(filename);
+    
+    // Also delete associated manifest file if it exists
+    const manifestKey = `${filename}-manifest.json`;
+    try {
+      await env.HOTSTACK_BUCKET.delete(manifestKey);
+    } catch (e) {
+      // Manifest might not exist, that's okay
+      console.log('No manifest to delete:', manifestKey);
+    }
 
     return new Response(JSON.stringify({
       success: true,
       message: `File ${filename} deleted successfully`,
+      filename,
     }), {
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
 
   } catch (error) {
+    console.error('Delete error:', error);
     return new Response(JSON.stringify({ 
       error: 'Failed to delete file', 
       message: error.message 

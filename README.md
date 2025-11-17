@@ -13,10 +13,13 @@ A high-performance file orchestration system built on Cloudflare Workers with R2
 - **R2 Storage Integration** - Scalable object storage with Cloudflare R2
 - **Auto-Deploy Manifests** - Automatic manifest creation for Fruitful sync
 - **Queue Processing** - Asynchronous file processing pipeline
-- **REST API** - Complete API for file management
+- **REST API** - Complete API with `/api/*` standardized endpoints
 - **Auto-Deployment** - GitHub Actions CI/CD pipeline
 - **Production Ready** - CORS enabled, error handling, and logging
 - **User Authentication** - D1 database integration with bcrypt password hashing
+- **Enhanced Delete Operations** - Confirmation modals with audit logging
+- **Proper File Downloads** - Correct headers and encoding for R2 downloads
+- **Mobile Responsive** - Works seamlessly on desktop and mobile devices
 
 ## 🚀 Quick Start
 
@@ -154,9 +157,11 @@ Fruitful integration page with:
 
 ## 📡 API Endpoints
 
+All endpoints support both legacy paths and `/api/*` prefixed paths for consistency.
+
 ### Upload File (Enhanced with Multipart Support)
 ```bash
-POST /upload
+POST /api/upload  # or /upload
 Content-Type: multipart/form-data
 Authorization: Bearer YOUR_TOKEN (optional)
 
@@ -173,7 +178,7 @@ Authorization: Bearer YOUR_TOKEN (optional)
 
 ### Get Upload Status
 ```bash
-GET /status
+GET /api/status  # or /status
 
 # Response
 {
@@ -191,7 +196,7 @@ GET /status
 
 ### List Files
 ```bash
-GET /files
+GET /api/files  # or /files
 
 # Response
 {
@@ -206,16 +211,19 @@ GET /files
 }
 ```
 
-### Get File
+### Download File
 ```bash
-GET /file/:filename
+GET /api/file/:filename  # or /file/:filename
 
-# Returns the file content
+# Returns the file content with proper headers:
+# - Content-Disposition: attachment; filename="original-name.ext"
+# - Content-Type: original MIME type
+# - Content-Length: file size
 ```
 
 ### Delete File
 ```bash
-DELETE /file/:filename
+DELETE /api/file/:filename  # or /file/:filename
 
 # Response
 {
@@ -224,34 +232,15 @@ DELETE /file/:filename
 }
 ```
 
-### Queue Status
+### Authentication Endpoints
 ```bash
-GET /queue/status
-
-# Response
-{
-  "queueEnabled": true,
-  "timestamp": 1234567890
-}
+POST /api/auth/signup    # Create new user account
+POST /api/auth/signin    # Sign in and create session
+POST /api/auth/signout   # Sign out and invalidate session
+GET  /api/auth/me        # Get current user information
 ```
 
-### Process File
-```bash
-POST /process
-Content-Type: application/json
-
-{
-  "filename": "example.pdf",
-  "action": "process"
-}
-
-# Response
-{
-  "success": true,
-  "message": "File queued for processing",
-  "filename": "example.pdf"
-}
-```
+**For complete API documentation, see [API_DOCUMENTATION.md](API_DOCUMENTATION.md)**
 
 ## 🔐 Security Features
 
@@ -403,8 +392,17 @@ https://dash.cloudflare.com
 - Verify DNS settings
 - Check worker logs
 
+**Authentication issues:**
+- Verify D1 database is configured
+- Check database schema is initialized
+- Ensure sessions are not expired
+
+**For detailed troubleshooting, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md)**
+
 ## 📚 Resources
 
+- **[API Documentation](API_DOCUMENTATION.md)** - Complete API reference with examples
+- **[Troubleshooting Guide](TROUBLESHOOTING.md)** - Detailed troubleshooting and debugging guide
 - [Cloudflare Workers Docs](https://developers.cloudflare.com/workers/)
 - [R2 Storage Docs](https://developers.cloudflare.com/r2/)
 - [Wrangler CLI Docs](https://developers.cloudflare.com/workers/wrangler/)

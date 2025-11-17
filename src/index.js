@@ -1132,7 +1132,7 @@ function getFruitfulHTML() {
 
             try {
                 showMessage('Uploading...', 'success');
-                const response = await fetch('/upload', {
+                const response = await fetch('/api/upload', {
                     method: 'POST',
                     body: formData
                 });
@@ -1519,7 +1519,7 @@ function getLandingPageHTML() {
             showStatus('Uploading...', 'loading');
 
             try {
-                const response = await fetch('/upload', {
+                const response = await fetch('/api/upload', {
                     method: 'POST',
                     body: formData,
                 });
@@ -2361,14 +2361,14 @@ function getDashboardHTML() {
                 addStatusLog('[ERROR] ❌ Network error');
             });
 
-            xhr.open('POST', '/upload', true);
+            xhr.open('POST', '/api/upload', true);
             xhr.send(formData);
         }
 
         // Load Metrics
         async function loadMetrics() {
             try {
-                const response = await fetch('/files');
+                const response = await fetch('/api/files');
                 const data = await response.json();
 
                 if (data.files) {
@@ -2389,7 +2389,7 @@ function getDashboardHTML() {
         // Load Files
         async function loadFiles() {
             try {
-                const response = await fetch('/status');
+                const response = await fetch('/api/status');
                 const data = await response.json();
 
                 const fileList = document.getElementById('fileList');
@@ -2419,21 +2419,47 @@ function getDashboardHTML() {
 
         // Delete File
         async function deleteFile(filename) {
-            if (!confirm(\`Delete \${filename}?\`)) return;
+            // Show delete confirmation modal
+            showDeleteModal(filename);
+        }
+
+        function showDeleteModal(filename) {
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.innerHTML = \`
+                <div class="modal-content">
+                    <div class="modal-header">⚠️ Confirm Delete</div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to delete this file?</p>
+                        <p style="margin-top: 1rem; color: var(--gold-primary);"><strong>\${filename.split('/').pop()}</strong></p>
+                        <p style="margin-top: 1rem; color: #f44336;">This action cannot be undone.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
+                        <button class="btn btn-primary" style="background: linear-gradient(135deg, #f44336 0%, #e91e63 100%);" onclick="confirmDelete('\${filename}')">Delete</button>
+                    </div>
+                </div>
+            \`;
+            document.body.appendChild(modal);
+        }
+
+        async function confirmDelete(filename) {
+            // Close modal
+            document.querySelectorAll('.modal').forEach(m => m.remove());
 
             try {
-                const response = await fetch(\`/file/\${encodeURIComponent(filename)}\`, {
+                const response = await fetch(\`/api/file/\${encodeURIComponent(filename)}\`, {
                     method: 'DELETE',
                 });
 
                 const result = await response.json();
 
                 if (result.success) {
-                    addStatusLog(\`[DELETE] 🗑️ \${filename} deleted\`);
+                    addStatusLog(\`[DELETE] 🗑️ \${filename.split('/').pop()} deleted\`);
                     loadFiles();
                     loadMetrics();
                 } else {
-                    addStatusLog(\`[ERROR] ❌ Delete failed\`);
+                    addStatusLog(\`[ERROR] ❌ Delete failed: \${result.error}\`);
                 }
             } catch (error) {
                 addStatusLog(\`[ERROR] ❌ \${error.message}\`);

@@ -58,30 +58,30 @@ export default {
         return await handleGetMe(request, env, corsHeaders);
       }
 
-      // Route: Upload file to R2
-      if (path === '/upload' && request.method === 'POST') {
+      // Route: Upload file to R2 (support both /upload and /api/upload)
+      if ((path === '/upload' || path === '/api/upload') && request.method === 'POST') {
         return await handleUpload(request, env, corsHeaders);
       }
 
-      // Route: Upload status (recent uploads)
-      if (path === '/status' && request.method === 'GET') {
+      // Route: Upload status (recent uploads) (support both /status and /api/status)
+      if ((path === '/status' || path === '/api/status') && request.method === 'GET') {
         return await handleUploadStatus(env, corsHeaders);
       }
 
-      // Route: List files in R2
-      if (path === '/files' && request.method === 'GET') {
+      // Route: List files in R2 (support both /files and /api/files)
+      if ((path === '/files' || path === '/api/files') && request.method === 'GET') {
         return await handleListFiles(env, corsHeaders);
       }
 
-      // Route: Get specific file from R2
-      if (path.startsWith('/file/') && request.method === 'GET') {
-        const filename = path.slice(6);
+      // Route: Get specific file from R2 (support both /file/ and /api/file/)
+      if ((path.startsWith('/file/') || path.startsWith('/api/file/')) && request.method === 'GET') {
+        const filename = path.startsWith('/api/file/') ? path.slice(10) : path.slice(6);
         return await handleGetFile(filename, env, corsHeaders);
       }
 
-      // Route: Delete file from R2
-      if (path.startsWith('/file/') && request.method === 'DELETE') {
-        const filename = path.slice(6);
+      // Route: Delete file from R2 (support both /file/ and /api/file/)
+      if ((path.startsWith('/file/') || path.startsWith('/api/file/')) && request.method === 'DELETE') {
+        const filename = path.startsWith('/api/file/') ? path.slice(10) : path.slice(6);
         return await handleDeleteFile(filename, env, corsHeaders);
       }
 
@@ -620,6 +620,7 @@ async function handleListFiles(env, corsHeaders) {
 
 /**
  * Get a specific file from R2 bucket
+ * Enhanced with proper headers and encoding for downloads
  */
 async function handleGetFile(filename, env, corsHeaders) {
   try {
@@ -632,9 +633,14 @@ async function handleGetFile(filename, env, corsHeaders) {
       });
     }
 
+    // Extract original filename from metadata or key
+    const originalName = object.customMetadata?.originalName || filename.split('/').pop();
+    
     const headers = {
-      'Content-Type': object.httpMetadata.contentType || 'application/octet-stream',
+      'Content-Type': object.httpMetadata?.contentType || 'application/octet-stream',
       'Content-Length': object.size,
+      'Content-Disposition': `attachment; filename="${encodeURIComponent(originalName)}"`,
+      'Cache-Control': 'public, max-age=3600',
       ...corsHeaders,
     };
 
@@ -653,19 +659,45 @@ async function handleGetFile(filename, env, corsHeaders) {
 
 /**
  * Delete a file from R2 bucket
+ * Enhanced with better error handling and audit support
  */
 async function handleDeleteFile(filename, env, corsHeaders) {
   try {
+    // Check if file exists first
+    const object = await env.HOTSTACK_BUCKET.head(filename);
+    
+    if (!object) {
+      return new Response(JSON.stringify({
+        error: 'File not found',
+        filename,
+      }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
+    // Delete the file
     await env.HOTSTACK_BUCKET.delete(filename);
+    
+    // Also delete associated manifest file if it exists
+    const manifestKey = `${filename}-manifest.json`;
+    try {
+      await env.HOTSTACK_BUCKET.delete(manifestKey);
+    } catch (e) {
+      // Manifest might not exist, that's okay
+      console.log('No manifest to delete:', manifestKey);
+    }
 
     return new Response(JSON.stringify({
       success: true,
       message: `File ${filename} deleted successfully`,
+      filename,
     }), {
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
 
   } catch (error) {
+    console.error('Delete error:', error);
     return new Response(JSON.stringify({ 
       error: 'Failed to delete file', 
       message: error.message 
@@ -1100,7 +1132,7 @@ function getFruitfulHTML() {
 
             try {
                 showMessage('Uploading...', 'success');
-                const response = await fetch('/upload', {
+                const response = await fetch('/api/upload', {
                     method: 'POST',
                     body: formData
                 });
@@ -1487,7 +1519,7 @@ function getLandingPageHTML() {
             showStatus('Uploading...', 'loading');
 
             try {
-                const response = await fetch('/upload', {
+                const response = await fetch('/api/upload', {
                     method: 'POST',
                     body: formData,
                 });
@@ -2329,14 +2361,14 @@ function getDashboardHTML() {
                 addStatusLog('[ERROR] ❌ Network error');
             });
 
-            xhr.open('POST', '/upload', true);
+            xhr.open('POST', '/api/upload', true);
             xhr.send(formData);
         }
 
         // Load Metrics
         async function loadMetrics() {
             try {
-                const response = await fetch('/files');
+                const response = await fetch('/api/files');
                 const data = await response.json();
 
                 if (data.files) {
@@ -2357,7 +2389,7 @@ function getDashboardHTML() {
         // Load Files
         async function loadFiles() {
             try {
-                const response = await fetch('/status');
+                const response = await fetch('/api/status');
                 const data = await response.json();
 
                 const fileList = document.getElementById('fileList');
@@ -2387,21 +2419,47 @@ function getDashboardHTML() {
 
         // Delete File
         async function deleteFile(filename) {
-            if (!confirm(\`Delete \${filename}?\`)) return;
+            // Show delete confirmation modal
+            showDeleteModal(filename);
+        }
+
+        function showDeleteModal(filename) {
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.innerHTML = \`
+                <div class="modal-content">
+                    <div class="modal-header">⚠️ Confirm Delete</div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to delete this file?</p>
+                        <p style="margin-top: 1rem; color: var(--gold-primary);"><strong>\${filename.split('/').pop()}</strong></p>
+                        <p style="margin-top: 1rem; color: #f44336;">This action cannot be undone.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
+                        <button class="btn btn-primary" style="background: linear-gradient(135deg, #f44336 0%, #e91e63 100%);" onclick="confirmDelete('\${filename}')">Delete</button>
+                    </div>
+                </div>
+            \`;
+            document.body.appendChild(modal);
+        }
+
+        async function confirmDelete(filename) {
+            // Close modal
+            document.querySelectorAll('.modal').forEach(m => m.remove());
 
             try {
-                const response = await fetch(\`/file/\${encodeURIComponent(filename)}\`, {
+                const response = await fetch(\`/api/file/\${encodeURIComponent(filename)}\`, {
                     method: 'DELETE',
                 });
 
                 const result = await response.json();
 
                 if (result.success) {
-                    addStatusLog(\`[DELETE] 🗑️ \${filename} deleted\`);
+                    addStatusLog(\`[DELETE] 🗑️ \${filename.split('/').pop()} deleted\`);
                     loadFiles();
                     loadMetrics();
                 } else {
-                    addStatusLog(\`[ERROR] ❌ Delete failed\`);
+                    addStatusLog(\`[ERROR] ❌ Delete failed: \${result.error}\`);
                 }
             } catch (error) {
                 addStatusLog(\`[ERROR] ❌ \${error.message}\`);

@@ -4,9 +4,25 @@ compatibility_date = "2024-11-01"
 
 account_id = "ad41fcfe1a84b27c62cc5cc9d590720e"
 
+# Routes for multiple domains
+[[routes]]
+pattern = "hotstack.faa.zone/*"
+zone_name = "faa.zone"
+
+[[routes]]
+pattern = "fruitful.faa.zone/*"
+zone_name = "faa.zone"
+
+# R2 Storage Binding
 [[r2_buckets]]
 binding = "HOTSTACK_BUCKET"
 bucket_name = "hotstack-intake-bucket"
+
+# D1 Database Binding
+[[d1_databases]]
+binding = "DB"
+database_name = "hotstack-db"
+database_id = "YOUR_DATABASE_ID"
 
 [site]
 bucket = "./public"

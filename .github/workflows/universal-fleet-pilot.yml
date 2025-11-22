@@ -1,0 +1,38 @@
+name: Universal Fleet Auto-Pilot
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  db-sync:
+    runs-on: ubuntu-latest
+    name: DB Sync
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Sync D1 Database
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: d1 execute DB --file=./schema.sql
+
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy
+    needs: db-sync
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy

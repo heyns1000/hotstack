@@ -19,8 +19,14 @@ import {
   getUserById
 } from './db/users.js';
 
+import { getGitHubScanner } from './github-scanner.js';
+import { getDriveConnector } from './drive-connector.js';
+
 // Session configuration
 const SESSION_DURATION_SECONDS = 7 * 24 * 60 * 60; // 7 days
+
+// Template version
+const HOTSTACK_VERSION = '5.0-github-drive-integrated';
 
 export default {
   async fetch(request, env) {
@@ -98,6 +104,48 @@ export default {
       // Route: Build endpoint - Generate HTML from prompt and file
       if (path === '/api/build' && request.method === 'POST') {
         return await handleBuild(request, env, corsHeaders);
+      }
+
+      // Template Management Endpoints
+
+      // Route: Scan GitHub repositories for templates
+      if (path === '/api/templates/scan-github' && request.method === 'POST') {
+        return await handleScanGitHub(env, corsHeaders);
+      }
+
+      // Route: Scan Google Drive for templates
+      if (path === '/api/templates/scan-drive' && request.method === 'POST') {
+        return await handleScanDrive(env, corsHeaders);
+      }
+
+      // Route: Search templates across all sources
+      if (path === '/api/templates/search' && request.method === 'POST') {
+        return await handleSearchTemplates(request, env, corsHeaders);
+      }
+
+      // Route: Get template statistics
+      if (path === '/api/templates/stats' && request.method === 'GET') {
+        return await handleTemplateStats(env, corsHeaders);
+      }
+
+      // Route: Get template sources status
+      if (path === '/api/templates/sources' && request.method === 'GET') {
+        return await handleTemplateSources(env, corsHeaders);
+      }
+
+      // Route: Collapse/Deploy with template selection
+      if (path === '/api/collapse' && request.method === 'POST') {
+        return await handleCollapse(request, env, corsHeaders);
+      }
+
+      // Route: Health check with template system status
+      if (path === '/health' && request.method === 'GET') {
+        return await handleHealth(env, corsHeaders);
+      }
+
+      // Route: System status
+      if (path === '/status' && request.method === 'GET') {
+        return await handleSystemStatus(env, corsHeaders);
       }
 
       // Route: Landing page
@@ -861,6 +909,510 @@ async function handleBuild(request, env, corsHeaders) {
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
   }
+}
+
+/**
+ * Handle GitHub repository scanning
+ */
+async function handleScanGitHub(env, corsHeaders) {
+  try {
+    if (!env.GITHUB_TOKEN) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'GitHub token not configured',
+        message: 'Set GITHUB_TOKEN secret in Cloudflare'
+      }), {
+        status: 503,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders }
+      });
+    }
+
+    const scanner = getGitHubScanner(env.GITHUB_TOKEN);
+    const result = await scanner.scanRepositories();
+
+    return new Response(JSON.stringify(result), {
+      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+    });
+  } catch (error) {
+    console.error('GitHub scan error:', error);
+    return new Response(JSON.stringify({
+      success: false,
+      error: error.message
+    }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+    });
+  }
+}
+
+/**
+ * Handle Google Drive scanning
+ */
+async function handleScanDrive(env, corsHeaders) {
+  try {
+    if (!env.GOOGLE_DRIVE_CREDENTIALS) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Google Drive credentials not configured',
+        message: 'Set GOOGLE_DRIVE_CREDENTIALS secret in Cloudflare'
+      }), {
+        status: 503,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders }
+      });
+    }
+
+    const credentials = JSON.parse(env.GOOGLE_DRIVE_CREDENTIALS);
+    const connector = getDriveConnector(credentials);
+    const result = await connector.scanTemplates();
+
+    return new Response(JSON.stringify(result), {
+      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+    });
+  } catch (error) {
+    console.error('Drive scan error:', error);
+    return new Response(JSON.stringify({
+      success: false,
+      error: error.message
+    }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+    });
+  }
+}
+
+/**
+ * Handle template search across all sources
+ */
+async function handleSearchTemplates(request, env, corsHeaders) {
+  try {
+    const body = await request.json();
+    const criteria = body.criteria || body;
+
+    const results = {
+      success: true,
+      sources: {},
+      allTemplates: []
+    };
+
+    // Search GitHub if available
+    if (env.GITHUB_TOKEN) {
+      try {
+        const scanner = getGitHubScanner(env.GITHUB_TOKEN);
+        const githubResults = await scanner.searchTemplates(criteria);
+        if (githubResults.success) {
+          results.sources.github = {
+            count: githubResults.count,
+            templates: githubResults.templates
+          };
+          results.allTemplates.push(...githubResults.templates);
+        }
+      } catch (error) {
+        console.error('GitHub search error:', error);
+        results.sources.github = { error: error.message };
+      }
+    }
+
+    // Search Drive if available
+    if (env.GOOGLE_DRIVE_CREDENTIALS) {
+      try {
+        const credentials = JSON.parse(env.GOOGLE_DRIVE_CREDENTIALS);
+        const connector = getDriveConnector(credentials);
+        const driveResults = await connector.searchTemplates(criteria);
+        if (driveResults.success) {
+          results.sources.drive = {
+            count: driveResults.count,
+            templates: driveResults.templates
+          };
+          results.allTemplates.push(...driveResults.templates);
+        }
+      } catch (error) {
+        console.error('Drive search error:', error);
+        results.sources.drive = { error: error.message };
+      }
+    }
+
+    // Sort combined results by relevance
+    results.allTemplates.sort((a, b) =>
+      (b.relevanceScore || 0) - (a.relevanceScore || 0)
+    );
+
+    results.totalCount = results.allTemplates.length;
+    results.criteria = criteria;
+
+    return new Response(JSON.stringify(results), {
+      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+    });
+  } catch (error) {
+    console.error('Template search error:', error);
+    return new Response(JSON.stringify({
+      success: false,
+      error: error.message
+    }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+    });
+  }
+}
+
+/**
+ * Handle template statistics
+ */
+async function handleTemplateStats(env, corsHeaders) {
+  try {
+    const stats = {
+      sources: {},
+      totalTemplates: 0,
+      categories: {},
+      lastUpdated: new Date().toISOString()
+    };
+
+    // Get GitHub stats
+    if (env.GITHUB_TOKEN) {
+      try {
+        const scanner = getGitHubScanner(env.GITHUB_TOKEN);
+        const scanResult = await scanner.scanRepositories();
+        if (scanResult.success) {
+          stats.sources.github = {
+            status: 'connected',
+            repositories: scanResult.repositories,
+            templates: scanResult.templatesFound,
+            categories: scanResult.categories
+          };
+          stats.totalTemplates += scanResult.templatesFound;
+
+          // Merge categories
+          for (const [cat, count] of Object.entries(scanResult.categories || {})) {
+            stats.categories[cat] = (stats.categories[cat] || 0) + count;
+          }
+        }
+      } catch (error) {
+        stats.sources.github = { status: 'error', error: error.message };
+      }
+    } else {
+      stats.sources.github = { status: 'not_configured' };
+    }
+
+    // Get Drive stats
+    if (env.GOOGLE_DRIVE_CREDENTIALS) {
+      try {
+        const credentials = JSON.parse(env.GOOGLE_DRIVE_CREDENTIALS);
+        const connector = getDriveConnector(credentials);
+        const scanResult = await connector.scanTemplates();
+        if (scanResult.success) {
+          stats.sources.drive = {
+            status: 'connected',
+            templates: scanResult.count,
+            folderId: scanResult.folderId
+          };
+          stats.totalTemplates += scanResult.count;
+        }
+      } catch (error) {
+        stats.sources.drive = { status: 'error', error: error.message };
+      }
+    } else {
+      stats.sources.drive = { status: 'not_configured' };
+    }
+
+    return new Response(JSON.stringify(stats), {
+      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+    });
+  } catch (error) {
+    console.error('Stats error:', error);
+    return new Response(JSON.stringify({
+      error: error.message
+    }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+    });
+  }
+}
+
+/**
+ * Handle template sources status
+ */
+async function handleTemplateSources(env, corsHeaders) {
+  try {
+    const sources = {};
+
+    // Check GitHub
+    if (env.GITHUB_TOKEN) {
+      const scanner = getGitHubScanner(env.GITHUB_TOKEN);
+      sources.github = await scanner.healthCheck();
+    } else {
+      sources.github = { status: 'not_configured' };
+    }
+
+    // Check Drive
+    if (env.GOOGLE_DRIVE_CREDENTIALS) {
+      const credentials = JSON.parse(env.GOOGLE_DRIVE_CREDENTIALS);
+      const connector = getDriveConnector(credentials);
+      sources.googleDrive = await connector.healthCheck();
+    } else {
+      sources.googleDrive = { status: 'not_configured' };
+    }
+
+    return new Response(JSON.stringify(sources), {
+      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({
+      error: error.message
+    }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+    });
+  }
+}
+
+/**
+ * Handle collapse/deploy with intelligent template selection
+ */
+async function handleCollapse(request, env, corsHeaders) {
+  try {
+    const startTime = Date.now();
+    const formData = await request.formData();
+    const file = formData.get('file');
+    const prompt = formData.get('prompt') || '';
+    const license = formData.get('license') || '';
+
+    if (!file) {
+      return new Response(JSON.stringify({
+        error: 'File is required'
+      }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders }
+      });
+    }
+
+    // Extract business intent from file
+    let extractedText = '';
+    try {
+      extractedText = await file.text();
+    } catch (e) {
+      extractedText = prompt;
+    }
+
+    const businessIntent = `${prompt} ${extractedText}`.substring(0, 1000);
+
+    // TEMPLATE SELECTION PRIORITY:
+    // 1. GitHub repositories (most up-to-date)
+    // 2. Google Drive (backup/legacy)
+    // 3. Fallback generator (last resort)
+
+    let selectedTemplate = null;
+    let templateSource = 'fallback';
+    let templateContent = null;
+
+    // Try GitHub first
+    if (env.GITHUB_TOKEN) {
+      console.log('🔍 Searching GitHub repositories...');
+      try {
+        const scanner = getGitHubScanner(env.GITHUB_TOKEN);
+        const searchResult = await scanner.searchTemplates({
+          businessIntent,
+          limit: 5
+        });
+
+        if (searchResult.success && searchResult.templates.length > 0) {
+          selectedTemplate = searchResult.templates[0];
+          templateSource = 'github';
+          console.log(`✅ Found GitHub template: ${selectedTemplate.repo}/${selectedTemplate.name}`);
+
+          // Fetch template content
+          const contentResult = await scanner.getTemplateContent(selectedTemplate);
+          if (contentResult.success) {
+            templateContent = contentResult.content;
+          }
+        }
+      } catch (error) {
+        console.error('GitHub search failed:', error);
+      }
+    }
+
+    // Try Google Drive if GitHub failed
+    if (!selectedTemplate && env.GOOGLE_DRIVE_CREDENTIALS) {
+      console.log('🔍 Searching Google Drive...');
+      try {
+        const credentials = JSON.parse(env.GOOGLE_DRIVE_CREDENTIALS);
+        const connector = getDriveConnector(credentials);
+        const searchResult = await connector.searchTemplates({
+          businessIntent,
+          limit: 5
+        });
+
+        if (searchResult.success && searchResult.templates.length > 0) {
+          selectedTemplate = searchResult.templates[0];
+          templateSource = 'google-drive';
+          console.log(`✅ Found Drive template: ${selectedTemplate.path}`);
+
+          // Fetch template content
+          const contentResult = await connector.getTemplateContent(selectedTemplate.id);
+          if (contentResult.success) {
+            templateContent = contentResult.content;
+          }
+        }
+      } catch (error) {
+        console.error('Drive search failed:', error);
+      }
+    }
+
+    // Use fallback if both failed
+    if (!templateContent) {
+      console.log('⚠️ Using fallback generator');
+      templateSource = 'fallback';
+      templateContent = generateHTMLTemplate(prompt, extractedText, file.name);
+    } else {
+      // Inject brand data into template
+      const brandData = {
+        brandName: extractBusinessName(businessIntent),
+        description: businessIntent.substring(0, 200),
+        primaryColor: '#3B82F6',
+        secondaryColor: '#8B5CF6'
+      };
+
+      if (templateSource === 'github') {
+        const scanner = getGitHubScanner(env.GITHUB_TOKEN);
+        templateContent = scanner.injectBrandData(templateContent, brandData);
+      } else {
+        const credentials = JSON.parse(env.GOOGLE_DRIVE_CREDENTIALS);
+        const connector = getDriveConnector(credentials);
+        templateContent = connector.injectBrandData(templateContent, brandData);
+      }
+    }
+
+    // Store deployed site in R2
+    const buildId = `build-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const key = `deployments/${buildId}/index.html`;
+
+    await env.HOTSTACK_BUCKET.put(key, templateContent, {
+      httpMetadata: { contentType: 'text/html' },
+      customMetadata: {
+        buildId,
+        templateSource,
+        license,
+        deployedAt: new Date().toISOString()
+      }
+    });
+
+    const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+    const withinTarget = elapsedTime < 180;
+
+    const response = {
+      success: true,
+      buildId,
+      elapsedTime,
+      withinTarget,
+      deployment: {
+        url: `https://hotstack.faa.zone/file/${key}`,
+        key
+      },
+      template: {
+        source: templateSource,
+        ...(selectedTemplate && {
+          name: selectedTemplate.name,
+          ...(templateSource === 'github' && {
+            repo: selectedTemplate.repo,
+            repoUrl: selectedTemplate.repoUrl,
+            fileUrl: selectedTemplate.fileUrl
+          }),
+          ...(templateSource === 'google-drive' && {
+            path: selectedTemplate.path,
+            driveId: selectedTemplate.id
+          })
+        })
+      },
+      licenseVault: {
+        verified: license === 'MASTERED',
+        license
+      }
+    };
+
+    return new Response(JSON.stringify(response), {
+      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+    });
+  } catch (error) {
+    console.error('Collapse error:', error);
+    return new Response(JSON.stringify({
+      success: false,
+      error: error.message
+    }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+    });
+  }
+}
+
+/**
+ * Handle health check
+ */
+async function handleHealth(env, corsHeaders) {
+  const systems = ['HotStack', 'R2Storage'];
+
+  if (env.GITHUB_TOKEN) systems.push('GitHub');
+  if (env.GOOGLE_DRIVE_CREDENTIALS) systems.push('GoogleDrive');
+  if (env.DB) systems.push('D1Database');
+
+  return new Response(JSON.stringify({
+    status: 'healthy',
+    version: HOTSTACK_VERSION,
+    systems,
+    timestamp: new Date().toISOString()
+  }), {
+    headers: { 'Content-Type': 'application/json', ...corsHeaders }
+  });
+}
+
+/**
+ * Handle system status
+ */
+async function handleSystemStatus(env, corsHeaders) {
+  const status = {
+    version: HOTSTACK_VERSION,
+    uptime: 'online',
+    systems: {}
+  };
+
+  // Check GitHub
+  if (env.GITHUB_TOKEN) {
+    try {
+      const scanner = getGitHubScanner(env.GITHUB_TOKEN);
+      status.systems.github = await scanner.healthCheck();
+    } catch (error) {
+      status.systems.github = { status: 'error', error: error.message };
+    }
+  }
+
+  // Check Drive
+  if (env.GOOGLE_DRIVE_CREDENTIALS) {
+    try {
+      const credentials = JSON.parse(env.GOOGLE_DRIVE_CREDENTIALS);
+      const connector = getDriveConnector(credentials);
+      status.systems.googleDrive = await connector.healthCheck();
+    } catch (error) {
+      status.systems.googleDrive = { status: 'error', error: error.message };
+    }
+  }
+
+  // Check R2
+  try {
+    await env.HOTSTACK_BUCKET.list({ limit: 1 });
+    status.systems.r2 = { status: 'connected' };
+  } catch (error) {
+    status.systems.r2 = { status: 'error', error: error.message };
+  }
+
+  return new Response(JSON.stringify(status), {
+    headers: { 'Content-Type': 'application/json', ...corsHeaders }
+  });
+}
+
+/**
+ * Extract business name from text
+ */
+function extractBusinessName(text) {
+  // Simple extraction - look for capitalized words at the beginning
+  const match = text.match(/^([A-Z][a-z]+(?: [A-Z][a-z]+)*)/);
+  return match ? match[0] : 'Your Business';
 }
 
 /**

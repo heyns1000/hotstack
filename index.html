@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔥 HotStack™ | Banimal Ecosystem Intake</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Courier+New:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- GLOBAL THEME: HOTSTACK (Rhino Gold / Dark) --- */
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #fff;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* Animated background particles */
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #fbbf24;
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
+            50% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
+        }
+        
+        .hotstack-container {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .countdown-timer {
+            font-family: 'Courier New', monospace; /* Used original font for the timer */
+            font-size: 3rem;
+            font-weight: bold;
+            color: #fbbf24;
+            text-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+        }
+        
+        .activation-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            border-radius: 6px;
+            background: rgba(251, 191, 36, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .activation-item:hover {
+            background: rgba(251, 191, 36, 0.2);
+            transform: translateX(5px);
+        }
+        
+        .btn-hotstack {
+            background: linear-gradient(45deg, #fbbf24, #f59e0b);
+            border: none;
+            color: #1a1a1a;
+            font-weight: 600;
+            padding: 12px 24px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3);
+            cursor: pointer;
+        }
+        
+        .btn-hotstack:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(251, 191, 36, 0.4);
+        }
+        
+        .drop-zone {
+            border: 2px dashed #fbbf24;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: rgba(251, 191, 36, 0.05);
+            cursor: pointer;
+        }
+        
+        .drop-zone:hover {
+            border-color: #f59e0b;
+            background: rgba(251, 191, 36, 0.1);
+        }
+        
+        .hotstack-station {
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            transition: all 0.3s ease;
+        }
+        
+        .hotstack-station.special {
+            background: rgba(0, 100, 255, 0.1);
+            border-color: rgba(0, 100, 255, 0.5);
+        }
+
+        .hotstack-station:hover {
+            background: rgba(251, 191, 36, 0.2);
+            transform: scale(1.02);
+        }
+        /* Metrics style for dynamic injection */
+        .metric-info {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: #888;
+            margin-top: 10px;
+            border-top: 1px solid #333;
+            padding-top: 5px;
+        }
+        .metric-info span {
+            color: #fbbf24;
+            font-weight: bold;
+        }
+        .region-header {
+            color: #f59e0b;
+            font-weight: bold;
+            text-align: left;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid rgba(251, 191, 36, 0.3);
+            padding-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated background particles -->
+    <div id="particles-container"></div>
+
+    <main class="container mx-auto px-4 py-8 relative z-10">
+        <div class="max-w-4xl mx-auto">
+            <!-- Main HotStack Interface -->
+            <div class="hotstack-container p-8 text-center mb-8">
+                <div class="flex items-center justify-center mb-6">
+                    <h1 class="text-4xl font-bold mr-4">🔥 HotStack™</h1>
+                </div>
+                
+                <p class="text-lg mb-2 text-gray-300">Omnidrop Your Digital Presence. Live in Minutes.</p>
+                <p class="text-xl font-semibold mb-8 text-yellow-400">Build Your Collapse.</p>
+                
+                <!-- Live Countdown Timer -->
+                <div class="countdown-timer mb-8" id="countdown-display">02:52</div>
+                
+                <!-- What Your Omnidrop Activates -->
+                <div class="text-left max-w-2xl mx-auto mb-8">
+                    <h3 class="text-xl font-semibold mb-4 text-center">What Your Omnidrop Activates:</h3>
+                    
+                    <div class="activation-item">
+                        <span class="text-yellow-400 mr-3">⚡</span>
+                        <strong>**Rapid Deployment:**</strong> Your Scroll goes Live in under 180 seconds via Omnidrop Signal.
+                    </div>
+                    
+                    <div class="activation-item">
+                        <span class="text-yellow-400 mr-3">⚡</span>
+                        <strong>**Integrated Ecosystem:**</strong> Auto DNS Hook + Curated Template Packs for seamless launch.
+                    </div>
+                    
+                    <div class="activation-item">
+                        <span class="text-yellow-400 mr-3">⚡</span>
+                        <strong>**Intelligent Foundation:**</strong> Powered by ScrollStack™, VaultDNS™, and MeshNest™ protocols.
+                    </div>
+                    
+                    <div class="activation-item">
+                        <span class="text-yellow-400 mr-3">⚡</span>
+                        <strong>**Treaty-Linked Economy:**</strong> Includes a Royalty-Linked License from Fruitful Global's Treaty Grid.
+                    </div>
+                    
+                    <div class="activation-item">
+                        <span class="text-yellow-400 mr-3">⚡</span>
+                        <strong>**ClaimRoot™ Verified:**</strong> Secure, traceable site ownership for every deployed scroll.
+                    </div>
+                </div>
+                
+                <!-- Main Action Button -->
+                <button class="btn-hotstack text-lg px-8 py-4 mb-8" id="enter-hotstack-btn" onclick="openZeroSignupPortal()">
+                    → Initiate Zero-Signup Access
+                </button>
+                
+                <!-- Drop Zone (Used as the core intake area) -->
+                <div class="drop-zone" id="omnidrop-zone">
+                    <div class="text-2xl mb-2">📂</div>
+                    <p class="text-gray-300 mb-2">Drag & Drop HTML/PDF here to Omnidrop into CodeNest™</p>
+                    <p class="text-sm text-gray-500">(Adheres to the 3-minute rule for rapid registration)</p>
+                </div>
+
+                <!-- Hidden Zero-Signup Metrics Display -->
+                <div id="signup-metrics-display" class="metric-info hidden">
+                    <p>Current Store ID: <span id="store-id">---</span>s | Total Strikes: <span id="total-strikes">---</span></p>
+                    <p>Routemesh Trace: <span id="routemesh-id">---</span></p>
+                    <p>License Status: <span id="license-status">---</span></p>
+                </div>
+            </div>
+            
+            <!-- Global HotStack Hubs -->
+            <div class="hotstack-container p-8 mb-8">
+                <h2 class="text-2xl font-bold text-center mb-6">🌎 Global HotStack Hubs</h2>
+                <p class="text-center text-gray-300 mb-6">Master Licensed Sectors for the Omnigrid Expansion</p>
+                
+                <!-- AFRICA HUB -->
+                <h3 class="region-header">🇿🇦 AFRICA MASTER HUB</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="hotstack-station">
+                        <h3 class="font-bold text-yellow-400">🏢 Cape Town HotStack</h3>
+                        <p class="text-sm text-gray-300">Western Cape Digital Gateway</p>
+                        <div class="mt-2">
+                            <span class="text-xs bg-green-600 px-2 py-1 rounded">ACTIVE</span>
+                        </div>
+                    </div>
+                    <div class="hotstack-station">
+                        <h3 class="font-bold text-yellow-400">🏙️ Johannesburg HotStack</h3>
+                        <p class="text-sm text-gray-300">Gauteng Business Hub</p>
+                        <div class="mt-2">
+                            <span class="text-xs bg-green-600 px-2 py-1 rounded">ACTIVE</span>
+                        </div>
+                    </div>
+                    <div class="hotstack-station">
+                        <h3 class="font-bold text-yellow-400">🌊 Lagos HotStack</h3>
+                        <p class="text-sm text-gray-300">West African Economic Anchor</p>
+                        <div class="mt-2">
+                            <span class="text-xs bg-yellow-600 px-2 py-1 rounded">SETUP</span>
+                        </div>
+                    </div>
+                    <div class="hotstack-station special">
+                        <h3 class="font-bold text-yellow-400">⛰️ Lesotho HotStack</h3>
+                        <p class="text-sm text-gray-300">Mountain Kingdom Treaty Node</p>
+                        <div class="mt-2">
+                            <span class="text-xs bg-blue-600 px-2 py-1 rounded">SPECIAL</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NORTH AMERICA HUB -->
+                <h3 class="region-header">🇺🇸 NORTH AMERICA HUB</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="hotstack-station">
+                        <h3 class="font-bold text-yellow-400">🗽 New York HotStack</h3>
+                        <p class="text-sm text-gray-300">Global FinTech Gateway</p>
+                        <div class="mt-2">
+                            <span class="text-xs bg-green-600 px-2 py-1 rounded">ACTIVE</span>
+                        </div>
+                    </div>
+                    <div class="hotstack-station">
+                        <h3 class="font-bold text-yellow-400">🌲 Toronto HotStack</h3>
+                        <p class="text-sm text-gray-300">Canadian Innovation Corridor</p>
+                        <div class="mt-2">
+                            <span class="text-xs bg-yellow-600 px-2 py-1 rounded">SETUP</span>
+                        </div>
+                    </div>
+                    <div class="hotstack-station">
+                        <h3 class="font-bold text-yellow-400">🌉 Silicon Valley HotStack</h3>
+                        <p class="text-sm text-gray-300">West Coast Tech Nexus</p>
+                        <div class="mt-2">
+                            <span class="text-xs bg-gray-600 px-2 py-1 rounded">PLANNED</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EURO / UK HUB -->
+                <h3 class="region-header">🇪🇺 EUROPE & UK MASTER HUB</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="hotstack-station">
+                        <h3 class="font-bold text-yellow-400">🏛️ London HotStack</h3>
+                        <p class="text-sm text-gray-300">UK Financial Exchange</p>
+                        <div class="mt-2">
+                            <span class="text-xs bg-green-600 px-2 py-1 rounded">ACTIVE</span>
+                        </div>
+                    </div>
+                    <div class="hotstack-station">
+                        <h3 class="font-bold text-yellow-400">🏰 Berlin HotStack</h3>
+                        <p class="text-sm text-gray-300">EU Digital Compliance Anchor</p>
+                        <div class="mt-2">
+                            <span class="text-xs bg-yellow-600 px-2 py-1 rounded">SETUP</span>
+                        </div>
+                    </div>
+                    <div class="hotstack-station">
+                        <h3 class="font-bold text-yellow-400">🇮🇸 Reykjavik HotStack</h3>
+                        <p class="text-sm text-gray-300">Atlantic Island Data Vault</p>
+                        <div class="mt-2">
+                            <span class="text-xs bg-blue-600 px-2 py-1 rounded">SPECIAL</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ASIA / AUSTRALASIA HUB -->
+                <h3 class="region-header">🇯🇵 ASIA & AUSTRALASIA HUB</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="hotstack-station">
+                        <h3 class="font-bold text-yellow-400">🗼 Tokyo HotStack</h3>
+                        <p class="text-sm text-gray-300">Japan Robotics Gateway</p>
+                        <div class="mt-2">
+                            <span class="text-xs bg-green-600 px-2 py-1 rounded">ACTIVE</span>
+                        </div>
+                    </div>
+                    <div class="hotstack-station">
+                        <h3 class="font-bold text-yellow-400">🏝️ Singapore HotStack</h3>
+                        <p class="text-sm text-gray-300">Southeast Asia Trade Nexus</p>
+                        <div class="mt-2">
+                            <span class="text-xs bg-yellow-600 px-2 py-1 rounded">SETUP</span>
+                        </div>
+                    </div>
+                    <div class="hotstack-station">
+                        <h3 class="font-bold text-yellow-400">🦘 Sydney HotStack</h3>
+                        <p class="text-sm text-gray-300">Australasian Data Core</p>
+                        <div class="mt-2">
+                            <span class="text-xs bg-gray-600 px-2 py-1 rounded">PLANNED</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            
+            <!-- Zero-Signup Portal Modal (The actual collapse interaction) -->
+            <div id="zero-signup-modal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
+                <div class="card p-8 md:p-10 rounded-2xl max-w-lg w-full bg-[#110022] border-2 border-dashed border-gray-700">
+                    <h3 class="text-2xl font-bold text-center mb-6 text-yellow-400">Zero-Signup Access Portal</h3>
+                    <p class="text-gray-400 mb-6 text-center text-sm">
+                        **No $\text{username}$ or $\text{password}$ required.** Initiate the $\text{Collapse}$ to calculate your identity.
+                    </p>
+                    
+                    <textarea id="collapse-idea-input" rows="5" class="w-full p-4 bg-gray-900 border border-gray-600 rounded-lg focus:border-yellow-400 focus:ring-yellow-400 text-gray-200" placeholder="HOTSTACK Design Blueprint: Define the specific goal, UI style (e.g., 'Rhino Flare'), and target platform. The system traces your prompt to: https://github.com/heyns1000/hotstack.git"></textarea>
+                    
+                    <div class="mt-6">
+                        <p class="text-sm font-mono text-gray-500 text-center">Your Calculated Pay ID: <span id="payfast-id" class="text-yellow-400">---</span></p>
+                        <p class="text-sm font-mono text-gray-500 text-center">User Number: <span id="user-number" class="text-white">---</span> (Sector: Coffee Business)</p>
+                    </div>
+                    
+                    <div class="flex justify-between items-center mt-6">
+                        <button onclick="closeZeroSignupPortal()" class="text-gray-500 hover:text-white transition text-sm">Cancel</button>
+                        <button onclick="deployShanana()" class="px-8 py-3 rounded-full text-lg font-bold action-button transition transform hover:scale-105">
+                            Collapse & Join NEXUS
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Integration with Noodle Juice Flow -->
+            <div class="hotstack-container p-8 mb-8">
+                <h2 class="text-2xl font-bold text-center mb-6">🍝 Noodle Juice Integration</h2>
+                <div class="text-center">
+                    <h3 class="font-bold text-yellow-400 mb-4">🔗 Referral System</h3>
+                    <div class="bg-gray-800 p-4 rounded-lg max-w-md mx-auto">
+                        <p class="text-xs text-gray-400 mb-2">Your Replit Referral:</p>
+                        <div class="bg-gray-900 p-2 rounded text-xs font-mono break-all">
+                            replit.com/refer/heynsschoeman
+                        </div>
+                        <button class="btn-hotstack mt-3 text-sm" id="copy-referral">Copy Link</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Live Status Console -->
+            <div class="hotstack-container p-6">
+                <h3 class="text-lg font-bold mb-4">📊 HotStack Live Status</h3>
+                <div class="bg-black rounded-lg p-4 font-mono text-sm">
+                    <div class="text-green-400" id="status-log">
+                        <!-- Real status logs will appear here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <footer class="text-center mt-8 text-gray-400 text-sm">
+                <p>Powered by Fruitful Global | ScrollSynced | Vault-Verified</p>
+                <p class="mt-2">🦍 Banimal Ecosystem | 🍝 Noodle Juice Flow | 🗄️ Vault Allocation</p>
+            </footer>
+        </div>
+    </main>
+
+    <script>
+        // --- INITIALIZATION FUNCTIONS (Moved to top for hoisting guarantee) ---
+        function createParticles() {
+            const container = document.getElementById('particles-container');
+            if (!container) return; 
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 6 + 's';
+                container.appendChild(particle);
+            }
+        }
+
+        // --- DATA AND INITIALIZATION ---
+        const ROOT_KEY = '0f19bb22-ad64-45d2-abc9-ad5686a978dc';
+        const LOCK_TIMESTAMP_MS = 1730013441000; // Ecosystem Genesis
+        const COLLAPSE_INTERVAL_MS = 900;
+        const BANIMAL_API_PULL_MS = 1730013441000 + 5000000; // Simulating API Key Pull time
+        
+        // **HOTSTACK LICENSING STATUS**
+        const HOTSTACK_LICENSE_STATUS = 'MASTERED'; // Must be 'MASTERED' to function
+
+        // --- COUNTDOWN LOGIC (Original HotStack Timer) ---
+        let minutes = 2;
+        let seconds = 52;
+        
+        function updateCountdown() {
+            const display = document.getElementById('countdown-display');
+            const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            display.textContent = formattedTime;
+            
+            if (seconds > 0) {
+                seconds--;
+            } else if (minutes > 0) {
+                minutes--;
+                seconds = 59;
+            } else {
+                // Reset to 3 minutes (180s)
+                minutes = 3;
+                seconds = 0;
+            }
+        }
+        
+        // --- CORE COLLAPSE PROTOCOL (IDENTITY CALCULATION) ---
+
+        function calculateCollapseMetrics(userCreationTimeMs = null) {
+            const now = new Date().getTime();
+            const timeElapsedMs = now - LOCK_TIMESTAMP_MS;
+            const storeID = timeElapsedMs / 1000;
+            const lapCount = Math.floor(timeElapsedMs / COLLAPSE_INTERVAL_MS);
+            
+            let payfastUserID = 'N/A';
+            let collapsedUserNumber = 'N/A';
+            let routemeshTraceID = btoa(storeID.toString()).substring(0, 20);
+
+            if (userCreationTimeMs) {
+                // Calculate Payfast User ID: (User Upload Time - Banimal API Key Pull Time)
+                const timeDiffSeconds = Math.abs((userCreationTimeMs - BANIMAL_API_PULL_MS) / 1000);
+                const rawUserID = Math.floor(timeDiffSeconds); 
+                
+                collapsedUserNumber = (rawUserID % 2300) + 1;
+                payfastUserID = `PF-${rawUserID.toString(36).toUpperCase()}`;
+            }
+
+            return {
+                storeID: storeID.toFixed(2),
+                lapCount: lapCount.toLocaleString(),
+                routemeshTraceID: routemeshTraceID,
+                payfastUserID: payfastUserID,
+                collapsedUserNumber: collapsedUserNumber
+            };
+        }
+
+        // --- UPDATE LOOP ---
+
+        function updateMetricsDisplay() {
+            const metrics = calculateCollapseMetrics();
+            
+            // Update License Status Display (Placeholder in NAV)
+            const licenseElement = document.querySelector('.hotstack-nav-item:first-child');
+            if (licenseElement) {
+                licenseElement.textContent = `AFRICA: ${HOTSTACK_LICENSE_STATUS}`;
+                if (HOTSTACK_LICENSE_STATUS === 'MASTERED') {
+                    licenseElement.classList.add('text-green-400');
+                    licenseElement.classList.remove('text-red-500');
+                } else {
+                    licenseElement.classList.remove('text-green-400');
+                    licenseElement.classList.add('text-red-500');
+                }
+            }
+        }
+
+        // --- LIVE STATUS LOGGER ---
+        function addStatusLog(message) {
+            const log = document.getElementById('status-log');
+            if (!log) return;
+            const time = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `<span class="text-blue-400">[${time}]</span> ${message}`;
+            log.appendChild(logEntry);
+            log.scrollTop = log.scrollHeight;
+            
+            // Keep only last 10 entries
+            if (log.children.length > 10) {
+                log.removeChild(log.firstChild);
+            }
+        }
+
+        // --- MODAL CONTROL ---
+        const modal = document.getElementById('zero-signup-modal');
+        function openZeroSignupPortal() {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            addStatusLog('🔑 Zero-Signup Portal opened.');
+            
+            // Ensure metrics are fresh when portal opens
+            const metrics = calculateCollapseMetrics();
+            const payfastIdElement = modal.querySelector('#payfast-id');
+            const userNumberElement = modal.querySelector('#user-number');
+
+            if (payfastIdElement) payfastIdElement.textContent = '---';
+            if (userNumberElement) userNumberElement.textContent = '---';
+            
+            // Focus on the input inside the modal
+            document.getElementById('collapse-idea-input').focus();
+        }
+
+        function closeZeroSignupPortal() {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            addStatusLog('🚪 Zero-Signup Portal closed.');
+            // Clear input on close
+            document.getElementById('collapse-idea-input').value = "";
+        }
+
+        // --- SHANANA DEPLOYMENT LOGIC (ACCESS INITIATION) ---
+
+        function deployShanana() {
+            const input = document.getElementById('collapse-idea-input').value.trim();
+            
+            // **HOTSTACK LICENSING LOCK CHECK**
+            if (HOTSTACK_LICENSE_STATUS !== 'MASTERED') {
+                 addStatusLog("❌ CRITICAL: Master License Lock. Deployment denied.");
+                 alert("CRITICAL ERROR: System cannot work. HOTSTACK Master License is required for deployment.");
+                 return;
+            }
+
+            const userCreationTime = new Date().getTime(); 
+            const metrics = calculateCollapseMetrics(userCreationTime);
+            
+            if (input.length < 10) {
+                alert("Error: Please provide a collapsed idea (min 10 characters) to initiate access.");
+                return;
+            }
+            
+            // Highlight Intake Portal and show processing status
+            const intakeCard = modal.querySelector('.card');
+            intakeCard.style.boxShadow = '0 0 40px rgba(255, 184, 0, 0.9)'; 
+            
+            const payfastIdElement = modal.querySelector('#payfast-id');
+            const userNumberElement = modal.querySelector('#user-number');
+
+            if (payfastIdElement) payfastIdElement.textContent = 'Collapsing...';
+            if (userNumberElement) userNumberElement.textContent = 'Generating...';
+            addStatusLog(`🔄 Initiating Collapse for User #${metrics.collapsedUserNumber}...`);
+
+            // Simulate Collapse Completion
+            setTimeout(() => {
+                
+                if (payfastIdElement) payfastIdElement.textContent = metrics.payfastUserID;
+                if (userNumberElement) userNumberElement.textContent = metrics.collapsedUserNumber + ' (Assigned)';
+                
+                addStatusLog(`✅ ACCESS GRANTED. Pay ID: ${metrics.payfastUserID}`);
+                addStatusLog('🌐 Connecting to all integration points (Git, Figma, Gemini, Replit)...');
+                
+                // Final alert/notification
+                alert(`ACCESS GRANTED!
+Your identity is the timestamp of your creation.
+- Payfast User ID: ${metrics.payfastUserID}
+- User Number: ${metrics.collapsedUserNumber}
+- Status: Connected to Git, Figma, Gemini, Replit.
+(Welcome to the Zero-Signup Nexus!)`);
+                
+                intakeCard.style.boxShadow = '0 0 0 rgba(255, 184, 0, 0.1)'; // Reset shadow
+                document.getElementById('collapse-idea-input').value = "";
+                closeZeroSignupPortal();
+                updateMetricsDisplay();
+            }, 1500); // 1.5 second simulation for dramatic effect
+        }
+
+
+        // --- DRAG & DROP LOGIC ---
+        const dropZone = document.getElementById('omnidrop-zone');
+        
+        dropZone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#f59e0b';
+            this.style.background = 'rgba(251, 191, 36, 0.2)';
+        });
+        
+        dropZone.addEventListener('dragleave', function(e) {
+            this.style.borderColor = '#fbbf24';
+            this.style.background = 'rgba(251, 191, 36, 0.05)';
+        });
+        
+        dropZone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#fbbf24';
+            this.style.background = 'rgba(251, 191, 36, 0.05)';
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                addStatusLog(`📂 ${files.length} file(s) detected for Omnidrop`);
+                addStatusLog('⚠️ Note: File processing requires backend server connection.');
+                addStatusLog('🔗 Switch to the Replit environment for full functionality.');
+                // In a live Replit environment, the API call logic would be here
+            }
+        });
+        
+        // --- REFERRAL COPY LOGIC ---
+        document.getElementById('copy-referral').addEventListener('click', function() {
+            navigator.clipboard.writeText('https://replit.com/refer/heynsschoeman');
+            this.textContent = 'Copied!';
+            addStatusLog('📋 Referral link copied to clipboard');
+            setTimeout(() => {
+                this.textContent = 'Copy Link';
+            }, 2000);
+        });
+
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            createParticles();
+            addStatusLog('🔥 HotStack™ system loading...');
+            updateMetricsDisplay(); 
+            setInterval(updateMetricsDisplay, 900); // Heartbeat tied to Collapse Interval
+            setInterval(updateCountdown, 1000); // Start Countdown Timer
+            
+            // Expose functions to global scope for button clicks
+            window.openZeroSignupPortal = openZeroSignupPortal; 
+            window.closeZeroSignupPortal = closeZeroSignupPortal;
+            window.deployShanana = deployShanana;
+        });
+    </script>
+</body>
+</html>

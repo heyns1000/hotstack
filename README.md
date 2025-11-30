@@ -1,16 +1,35 @@
-# HotStack™ Landing Page
+# HotStack™ Landing Page + OMNIGRID Ecosystem
 
 **Live at**: https://hotstack.faa.zone
 
 ## Overview
 
-HotStack™ is the Zero-Signup intake system for the Banimal Ecosystem. This landing page provides:
+HotStack™ is the Zero-Signup intake system for the Banimal Ecosystem, now integrated with the complete **OMNIGRID Ecosystem** featuring:
 
-- ✅ **Omnidrop Protocol** - 180-second rapid deployment window
+- ✅ **Omnidrop Protocol** - 180-second rapid deployment window to **7,102 brands**
 - ✅ **Zero-Signup Access** - Instant identity generation via Collapse protocol
 - ✅ **Global Hub Network** - 12 deployment stations across continents
 - ✅ **Drag & Drop Upload** - HTML/PDF file intake with real-time processing
 - ✅ **Live Status Console** - Real-time deployment tracking
+- 🔥 **OMNIGRID Integration** - Full ecosystem deployment (Seedwave, VaultMesh, NEXUS_NAIR, BaobabTree, Chess)
+
+## 🔄 OMNIGRID Ecosystem
+
+This repository now contains the complete OMNIGRID ecosystem with:
+
+### **Core Services**:
+- 🌾 **Seedwave Admin Portal** - Central administration for 7,102 brands across 12 subdomains
+- 🔐 **VaultMesh™ Security** - AES-256 encryption, COLLAPSE authentication, rate limiting
+- 💎 **NEXUS_NAIR™ Pulse** - Global synchronization system (pulse: 1,247,892+)
+- 🌳 **BaobabTree™** - Hierarchical data structure (15 nodes)
+- ♟️ **Luke Chess Engine** - E4 opening strategy integration
+
+### **Quick Access**:
+- **Full Documentation**: See `omnigrid-master/OMNIDROP.md`
+- **Seedwave Portal**: `omnigrid-master/core/seedwave/admin-portal.html`
+- **Security Layer**: `omnigrid-master/core/vaultmesh/security.ts`
+- **Pulse System**: `omnigrid-master/core/nexus-nair/pulse.ts`
+- **Chess Engine**: `omnigrid-master/chess-game/luke/engine.ts`
 
 ## Template Source
 

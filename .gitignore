@@ -1,0 +1,3 @@
+node_modules/
+*.js
+!omnigrid-master/core/fruitful-global/**/*.js

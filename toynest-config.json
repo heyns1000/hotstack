@@ -2,7 +2,8 @@
   "toynest": {
     "domain": "toynest.faa.zone",
     "repository": "https://github.com/Heyns100/toynest.seedwave.git",
-    "description": "Smart toys platform with user metadata and brand subdomains",
+    "status": "EXISTING - Active for months with media/brand/TV functionality",
+    "description": "Smart toys platform with user metadata, brand subdomains, and media/TV features",
     "features": {
       "user_metadata": {
         "enabled": true,

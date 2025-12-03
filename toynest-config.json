@@ -1,41 +1,49 @@
 {
   "toynest": {
-    "domain": "toynest.faa.zone",
-    "repository": "https://github.com/Heyns100/toynest.seedwave.git",
-    "status": "EXISTING - Active for months with media/brand/TV functionality",
-    "description": "Smart toys platform with user metadata, brand subdomains, and media/TV features",
-    "features": {
-      "user_metadata": {
+    "domain": "toynest.seedwave.faa.zone",
+    "repository": "https://github.com/heyns1000/toynest.seedwave.faa.zone.git",
+    "status": "LIVE - Complete dashboard with Smart Toys, Media, and User Management",
+    "description": "Comprehensive ToyNest™ platform for developing, deploying, and managing educational smart toys across Fruitful Global Treaty Grid",
+    "dashboard_files": {
+      "main": "index.html (3,936 lines)",
+      "smart_toys": "public/dashboard.html (4,045 lines)"
+    },
+    "existing_features": {
+      "dashboard": {
+        "title": "Fruitful™ | ToyNest™ Dashboard",
+        "theme": "Apple Blue (#0071e3) + Yellow (#facc15)",
+        "modes": ["dark", "light"],
+        "analytics": ["User Activity Charts", "System Health", "Project Metrics"]
+      },
+      "sectors": {
+        "media": "🎬 Motion, Media & Sonic",
+        "education_youth": "Smart Toys + Educational Brands",
+        "core_services": ["Project Management", "License Vault", "Deployment Pipelines", "User Access"]
+      },
+      "user_management": {
         "enabled": true,
-        "core_data": [
-          "user_id",
-          "creation_timestamp",
-          "collapse_identity",
-          "sector_assignment"
-        ],
-        "subnodes": [
-          "toy_preferences",
-          "interaction_history",
-          "brand_affiliations",
-          "achievement_data"
+        "fields": ["displayName", "email", "user_id"],
+        "tracking": ["userActivity", "chatHistory", "projects"],
+        "authentication": "integrated"
+      },
+      "smart_toys_platform": {
+        "title": "🧸 Fruitful Smart Toys™ 🌈",
+        "welcome_message": "Welcome Back, Smart Toys Innovator!",
+        "capabilities": [
+          "Develop educational smart toys",
+          "Deploy across Fruitful Global Treaty Grid",
+          "Manage learning experiences",
+          "Track user engagement"
         ]
       },
-      "brand_subdomains": {
+      "brand_subnodes": {
         "enabled": true,
-        "format": "{brand}.toynest.faa.zone",
+        "format": "Brands with hierarchical subnodes",
         "examples": [
-          "lego.toynest.faa.zone",
-          "mattel.toynest.faa.zone",
-          "hasbro.toynest.faa.zone",
-          "fruitful.toynest.faa.zone"
-        ],
-        "auto_provision": true
-      },
-      "smart_toy_activation": {
-        "enabled": true,
-        "activation_method": "user_idea_driven",
-        "metadata_sync": "9_second_pulse",
-        "collapse_protocol": true
+          "Fruitful Smart Toys (with multiple subnodes)",
+          "Education brands with subnode structure",
+          "Media & Sonic brands"
+        ]
       }
     },
     "integration": {
@@ -83,12 +91,19 @@
         }
       }
     },
+    "integration_with_hotstack": {
+      "user_creation_flow": "HotStack Collapse Identity → ToyNest User Management",
+      "metadata_sync": "CodeNest fruitfulPlanetChange → ToyNest Dashboard",
+      "project_deployment": "HotStack Upload → ToyNest Smart Toy Project",
+      "sector_assignment": "User sector maps to ToyNest education-youth or media"
+    },
+    "live_dashboard_url": "https://toynest.seedwave.faa.zone",
     "api_endpoints": {
-      "create_user": "POST /api/toynest/users",
-      "get_metadata": "GET /api/toynest/users/:id",
-      "update_subnodes": "PATCH /api/toynest/users/:id/subnodes",
-      "deploy_brand": "POST /api/toynest/brands/:brand/deploy",
-      "activate_toy": "POST /api/toynest/toys/activate"
+      "dashboard": "GET /",
+      "smart_toys": "GET /public/dashboard.html",
+      "user_profile": "GET /user/profile",
+      "projects": "GET /projects",
+      "analytics": "GET /analytics"
     }
   }
 }

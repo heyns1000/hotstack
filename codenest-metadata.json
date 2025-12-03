@@ -1,0 +1,44 @@
+{
+  "codenest": {
+    "repository": "https://github.com/heyns1000/codenest.git",
+    "integration": "fruitfulPlanetChange",
+    "metadata_endpoint": "https://buildnest-orchestrator.heynsschoeman.workers.dev/metadata",
+    "sectors": {
+      "health": {
+        "repo": "repos/healthtrack",
+        "api": "/api/health"
+      },
+      "finance": {
+        "repo": "repos/vaultpay",
+        "api": "/api/vaultpay"
+      },
+      "legal": {
+        "repo": "repos/legal",
+        "api": "/api/legal"
+      },
+      "fruitful": {
+        "repo": "repos/fruitfulPlanetChange",
+        "api": "/api/fruitful",
+        "architecture": "full-stack",
+        "database": "postgresql",
+        "features": [
+          "sector-mapping",
+          "user-metadata",
+          "brand-management",
+          "product-catalog",
+          "payment-processing"
+        ]
+      }
+    }
+  },
+  "hotstack": {
+    "omnidrop_protocol": true,
+    "deployment_window_seconds": 180,
+    "global_hubs": [
+      "Cape Town", "Johannesburg", "Lagos", "Lesotho",
+      "New York", "Toronto", "Silicon Valley",
+      "London", "Berlin", "Reykjavik",
+      "Tokyo", "Singapore", "Sydney"
+    ]
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "toynest": {
+    "domain": "toynest.faa.zone",
+    "repository": "https://github.com/Heyns100/toynest.seedwave.git",
+    "description": "Smart toys platform with user metadata and brand subdomains",
+    "features": {
+      "user_metadata": {
+        "enabled": true,
+        "core_data": [
+          "user_id",
+          "creation_timestamp",
+          "collapse_identity",
+          "sector_assignment"
+        ],
+        "subnodes": [
+          "toy_preferences",
+          "interaction_history",
+          "brand_affiliations",
+          "achievement_data"
+        ]
+      },
+      "brand_subdomains": {
+        "enabled": true,
+        "format": "{brand}.toynest.faa.zone",
+        "examples": [
+          "lego.toynest.faa.zone",
+          "mattel.toynest.faa.zone",
+          "hasbro.toynest.faa.zone",
+          "fruitful.toynest.faa.zone"
+        ],
+        "auto_provision": true
+      },
+      "smart_toy_activation": {
+        "enabled": true,
+        "activation_method": "user_idea_driven",
+        "metadata_sync": "9_second_pulse",
+        "collapse_protocol": true
+      }
+    },
+    "integration": {
+      "codenest": {
+        "metadata_source": "repos/fruitfulPlanetChange",
+        "sector_mapping": true,
+        "user_database": "postgresql"
+      },
+      "hotstack": {
+        "deployment_method": "omnidrop",
+        "build_system": "buildnest",
+        "deployment_window": 180
+      }
+    },
+    "user_flow": {
+      "1_upload": "User uploads idea/design to hotstack.faa.zone",
+      "2_process": "AI extracts intent and creates toy concept",
+      "3_assign": "User gets unique metadata (collapse identity)",
+      "4_deploy": "Toy platform deployed to {brand}.toynest.faa.zone",
+      "5_activate": "Smart toy features activated with user subnodes"
+    },
+    "metadata_structure": {
+      "user_core": {
+        "user_id": "calculated_from_timestamp",
+        "collapse_id": "payfast_format",
+        "user_number": "1-2300_sector_assignment",
+        "creation_time": "iso_8601_timestamp",
+        "sector": "coffee_business_default"
+      },
+      "toy_subnodes": {
+        "preferences": {
+          "toy_types": ["educational", "interactive", "collectible"],
+          "age_range": "string",
+          "interests": "array"
+        },
+        "interactions": {
+          "play_sessions": "array",
+          "achievements": "array",
+          "milestones": "array"
+        },
+        "brand_data": {
+          "affiliated_brands": "array",
+          "owned_toys": "array",
+          "wishlist": "array"
+        }
+      }
+    },
+    "api_endpoints": {
+      "create_user": "POST /api/toynest/users",
+      "get_metadata": "GET /api/toynest/users/:id",
+      "update_subnodes": "PATCH /api/toynest/users/:id/subnodes",
+      "deploy_brand": "POST /api/toynest/brands/:brand/deploy",
+      "activate_toy": "POST /api/toynest/toys/activate"
+    }
+  }
+}

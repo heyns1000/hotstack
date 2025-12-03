@@ -402,9 +402,17 @@
         const LOCK_TIMESTAMP_MS = 1730013441000; // Ecosystem Genesis
         const COLLAPSE_INTERVAL_MS = 900;
         const BANIMAL_API_PULL_MS = 1730013441000 + 5000000; // Simulating API Key Pull time
-        
+
         // **HOTSTACK LICENSING STATUS**
         const HOTSTACK_LICENSE_STATUS = 'MASTERED'; // Must be 'MASTERED' to function
+
+        // **CODENEST INTEGRATION**
+        const CODENEST_REPO = 'https://github.com/heyns1000/codenest.git';
+        const CODENEST_METADATA_ENDPOINT = 'https://buildnest-orchestrator.heynsschoeman.workers.dev/metadata';
+
+        // **TOYNEST INTEGRATION**
+        const TOYNEST_DOMAIN = 'toynest.faa.zone';
+        const TOYNEST_ENABLED = true;
 
         // --- COUNTDOWN LOGIC (Original HotStack Timer) ---
         let minutes = 2;
@@ -476,6 +484,34 @@
             }
         }
 
+        // --- CODENEST METADATA LOADER ---
+        async function loadCodenestMetadata() {
+            try {
+                const response = await fetch('/codenest-metadata.json');
+                const metadata = await response.json();
+                addStatusLog('✅ CodeNest metadata loaded successfully');
+                return metadata;
+            } catch (error) {
+                addStatusLog('⚠️ CodeNest metadata loading from local config');
+                return null;
+            }
+        }
+
+        // --- TOYNEST CONFIG LOADER ---
+        async function loadToynestConfig() {
+            try {
+                const response = await fetch('/toynest-config.json');
+                const config = await response.json();
+                if (config.toynest.features.user_metadata.enabled) {
+                    addStatusLog('✅ ToyNest user metadata system enabled');
+                }
+                return config;
+            } catch (error) {
+                addStatusLog('⚠️ ToyNest config not available');
+                return null;
+            }
+        }
+
         // --- LIVE STATUS LOGGER ---
         function addStatusLog(message) {
             const log = document.getElementById('status-log');
@@ -485,7 +521,7 @@
             logEntry.innerHTML = `<span class="text-blue-400">[${time}]</span> ${message}`;
             log.appendChild(logEntry);
             log.scrollTop = log.scrollHeight;
-            
+
             // Keep only last 10 entries
             if (log.children.length > 10) {
                 log.removeChild(log.firstChild);
@@ -615,15 +651,28 @@ Your identity is the timestamp of your creation.
 
 
         // --- INITIALIZATION ---
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             createParticles();
             addStatusLog('🔥 HotStack™ system loading...');
-            updateMetricsDisplay(); 
+
+            // Load integrations
+            addStatusLog('🔗 Connecting to CodeNest repository...');
+            const codenestMetadata = await loadCodenestMetadata();
+
+            if (TOYNEST_ENABLED) {
+                addStatusLog('🧸 Loading ToyNest configuration...');
+                const toynestConfig = await loadToynestConfig();
+            }
+
+            addStatusLog('🌍 Fruitful Global Planet integration active');
+            addStatusLog('✅ All systems operational');
+
+            updateMetricsDisplay();
             setInterval(updateMetricsDisplay, 900); // Heartbeat tied to Collapse Interval
             setInterval(updateCountdown, 1000); // Start Countdown Timer
-            
+
             // Expose functions to global scope for button clicks
-            window.openZeroSignupPortal = openZeroSignupPortal; 
+            window.openZeroSignupPortal = openZeroSignupPortal;
             window.closeZeroSignupPortal = closeZeroSignupPortal;
             window.deployShanana = deployShanana;
         });

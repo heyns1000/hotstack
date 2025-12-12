@@ -500,7 +500,6 @@
         function createParticles() {
             const container = document.getElementById('particles-container');
             if (!container) return;
-            
             // Use DocumentFragment for better performance
             const fragment = document.createDocumentFragment();
             for (let i = 0; i < 50; i++) {
@@ -686,7 +685,7 @@
             logEntry.innerHTML = `<span class="text-blue-400">[${time}]</span> ${message}`;
             statusLogElement.appendChild(logEntry);
             
-            // Keep only last 10 entries - optimize by checking length before scrolling
+            // Keep only last 10 entries - check length once, then scroll once
             const children = statusLogElement.children;
             if (children.length > 10) {
                 statusLogElement.removeChild(children[0]);

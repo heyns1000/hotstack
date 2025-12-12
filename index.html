@@ -154,6 +154,20 @@
                 <p class="text-lg mb-2 text-gray-300">Omnidrop Your Digital Presence. Live in Minutes.</p>
                 <p class="text-xl font-semibold mb-8 text-yellow-400">Build Your Collapse.</p>
                 
+                <!-- Bad Boys Noodle Status -->
+                <div class="bg-gradient-to-r from-purple-900/30 to-blue-900/30 border border-yellow-400/50 rounded-lg p-4 mb-6 max-w-2xl mx-auto">
+                    <div class="flex items-center justify-center mb-2">
+                        <span class="text-2xl mr-2">🍜</span>
+                        <h3 class="text-lg font-bold text-yellow-400">Noodle Status: Bad Boys Humming MASTERED</h3>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-sm text-gray-300">
+                        <div>🦏 <strong>Rhino Strikes:</strong> Synchronized to beat</div>
+                        <div>🐜 <strong>Ant Lattice:</strong> Dancing to rhythm</div>
+                        <div>👕 <strong>T-Shirt:</strong> WHITE on the drop</div>
+                        <div>🦍🏔️🦊 <strong>Trinity:</strong> Approved by soundtrack</div>
+                    </div>
+                </div>
+                
                 <!-- Live Countdown Timer -->
                 <div class="countdown-timer mb-8" id="countdown-display">02:52</div>
                 
@@ -406,6 +420,37 @@
         // **HOTSTACK LICENSING STATUS**
         const HOTSTACK_LICENSE_STATUS = 'MASTERED'; // Must be 'MASTERED' to function
 
+        // **BAD BOYS NOODLE PROTOCOL**
+        const NOODLE_BAD_BOYS_PROTOCOL = {
+            soundtrack: {
+                primary: 'Gorilla Mountain Fox',
+                secondary: 'Bad Boys (Noodle Hum Remix)',
+                certification: 'MASTERED',
+            },
+            noodleStatus: {
+                skill: 'BAD_BOYS_HUMMING',
+                mastery: 'COMPLETE',
+                hummingFrequency: '0.08Hz', // Matches Rhino Strike
+            },
+            deploymentSequence: {
+                phase1: {
+                    action: 'RHINO_STRIKE',
+                    soundtrack: 'Bad boys, bad boys...',
+                    timing: 0.08,
+                },
+                phase2: {
+                    action: 'ANT_LATTICE_COLLAPSE',
+                    soundtrack: 'Whatcha gonna do...',
+                    timing: 0.08,
+                },
+                phase3: {
+                    action: 'T_SHIRT_WHITE',
+                    soundtrack: '[Noodle humming intensifies]',
+                    timing: 9.0,
+                },
+            },
+        };
+
         // **CODENEST INTEGRATION**
         const CODENEST_REPO = 'https://github.com/heyns1000/codenest.git';
         const CODENEST_METADATA_ENDPOINT = 'https://buildnest-orchestrator.heynsschoeman.workers.dev/metadata';
@@ -529,6 +574,31 @@
             }
         }
 
+        // --- BAD BOYS DEPLOYMENT SEQUENCE ---
+        function executeBadBoysSequence() {
+            const sequence = NOODLE_BAD_BOYS_PROTOCOL.deploymentSequence;
+            
+            // Phase 1: Rhino Strike
+            setTimeout(() => {
+                addStatusLog(`🎵 "${sequence.phase1.soundtrack}" 🦏 ${sequence.phase1.action} at ${sequence.phase1.timing}s`);
+            }, sequence.phase1.timing * 1000);
+            
+            // Phase 2: Ant Lattice Collapse
+            setTimeout(() => {
+                addStatusLog(`🎶 "${sequence.phase2.soundtrack}" 🐜 ${sequence.phase2.action}`);
+            }, (sequence.phase1.timing + sequence.phase2.timing) * 1000);
+            
+            // Phase 3: T-Shirt White Transformation
+            setTimeout(() => {
+                addStatusLog(`🎵 "${sequence.phase3.soundtrack}" 👕 ${sequence.phase3.action} transformation`);
+            }, sequence.phase3.timing * 1000);
+            
+            // Final: Gorilla Mountain Fox Complete
+            setTimeout(() => {
+                addStatusLog('🎶 🦍🏔️🦊 Gorilla Mountain Fox deployment complete!');
+            }, (sequence.phase3.timing + 1) * 1000);
+        }
+
         // --- MODAL CONTROL ---
         const modal = document.getElementById('zero-signup-modal');
         function openZeroSignupPortal() {
@@ -568,6 +638,13 @@
                  return;
             }
 
+            // **BAD BOYS CERTIFICATION CHECK**
+            if (NOODLE_BAD_BOYS_PROTOCOL.soundtrack.certification !== 'MASTERED') {
+                addStatusLog("❌ CRITICAL: Bad Boys Song not mastered. Deployment denied.");
+                alert("CRITICAL ERROR: The Noodle must master the Bad Boys song before deployment.");
+                return;
+            }
+
             const userCreationTime = new Date().getTime(); 
             const metrics = calculateCollapseMetrics(userCreationTime);
             
@@ -586,6 +663,10 @@
             if (payfastIdElement) payfastIdElement.textContent = 'Collapsing...';
             if (userNumberElement) userNumberElement.textContent = 'Generating...';
             addStatusLog(`🔄 Initiating Collapse for User #${metrics.collapsedUserNumber}...`);
+            addStatusLog(`🎵 Bad Boys Protocol: ${NOODLE_BAD_BOYS_PROTOCOL.noodleStatus.skill} - ${NOODLE_BAD_BOYS_PROTOCOL.noodleStatus.mastery}`);
+
+            // Execute Bad Boys deployment sequence
+            executeBadBoysSequence();
 
             // Simulate Collapse Completion
             setTimeout(() => {
@@ -601,6 +682,7 @@
 Your identity is the timestamp of your creation.
 - Payfast User ID: ${metrics.payfastUserID}
 - User Number: ${metrics.collapsedUserNumber}
+- Bad Boys Status: ${NOODLE_BAD_BOYS_PROTOCOL.noodleStatus.skill} MASTERED ✅
 - Status: Connected to Git, Figma, Gemini, Replit.
 (Welcome to the Zero-Signup Nexus!)`);
                 
@@ -655,6 +737,13 @@ Your identity is the timestamp of your creation.
         document.addEventListener('DOMContentLoaded', async () => {
             createParticles();
             addStatusLog('🔥 HotStack™ system loading...');
+            
+            // Check Bad Boys Protocol Certification
+            if (NOODLE_BAD_BOYS_PROTOCOL.soundtrack.certification === 'MASTERED') {
+                addStatusLog('🎵 Bad Boys Protocol: CERTIFIED ✅');
+                addStatusLog(`🍜 Noodle Status: ${NOODLE_BAD_BOYS_PROTOCOL.noodleStatus.skill} - ${NOODLE_BAD_BOYS_PROTOCOL.noodleStatus.mastery}`);
+                addStatusLog(`🦏 Rhino Strike: Synchronized at ${NOODLE_BAD_BOYS_PROTOCOL.noodleStatus.hummingFrequency}`);
+            }
 
             // Load integrations
             addStatusLog('🔗 Connecting to CodeNest repository...');
@@ -666,6 +755,7 @@ Your identity is the timestamp of your creation.
             }
 
             addStatusLog('🌍 Fruitful Global Planet integration active');
+            addStatusLog('🦍🏔️🦊 Gorilla Mountain Fox Trinity: APPROVED');
             addStatusLog('✅ All systems operational');
 
             updateMetricsDisplay();

@@ -14,14 +14,14 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "019b707b-b33f-7a1c-a703-57213a84f433",
-      "database_id": "019b707b-b33f-7a1c-a703-57213a84f433"
+      "database_name": "hotstack-db",
+      "database_id": "b89c40c4-741a-42bf-aa2b-eb030b616b61"
     }
   ],
   "r2_buckets": [
     {
       "binding": "R2_BUCKET",
-      "bucket_name": "019b707b-b33f-7a1c-a703-57213a84f433"
+      "bucket_name": "hotstack-intake-bucket"
     }
   ]
 }

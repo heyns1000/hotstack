@@ -21,36 +21,12 @@ const SECONDARY_NAV = [
 ];
 
 export default function Home() {
-  const [timerExpired, setTimerExpired] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-
-  const handleTimerComplete = () => setTimerExpired(true);
-
-  const handleFilesDrop = async (files: FileList) => {
-    const file = files[0];
-    if (file.type !== 'text/html' && file.type !== 'application/pdf') {
-      alert('Only HTML or PDF files can be omnidropped.');
-      return;
-    }
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const response = await fetch('/api/upload', { method: 'POST', body: formData });
-      if (!response.ok) throw new Error('Upload failed');
-      alert(`"${file.name}" is being omnidropped into CodeNest™!`);
-      setTimeout(() => {
-        document.getElementById('file-manager')?.scrollIntoView({ behavior: 'smooth' });
-      }, 1000);
-    } catch {
-      alert('Failed to omnidrop file. Please try again.');
-    }
-  };
 
   return (
     <div className="min-h-screen bg-[#1a1a1c] overflow-hidden">
       <ParticleCanvas />
 
-      {/* Fruitful Branding Header */}
       <div className="relative z-20 bg-gradient-to-r from-yellow-600/10 to-teal-600/10 border-b border-white/10 py-3">
         <div className="container mx-auto px-6 flex items-center justify-center">
           <img
@@ -61,15 +37,12 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Navigation */}
       <nav className="relative z-20 px-4 py-4 border-b border-white/5">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          {/* Logo */}
           <Link to="/" className="text-xl font-bold text-white whitespace-nowrap shrink-0">
             Fruitful | CodeNest™
           </Link>
 
-          {/* Primary nav — always visible on md+ */}
           <div className="hidden md:flex items-center gap-2 flex-wrap">
             {PRIMARY_NAV.map(({ to, label, gradient }) => (
               <Link
@@ -80,11 +53,9 @@ export default function Home() {
                 {label}
               </Link>
             ))}
-
-            {/* More dropdown */}
             <div className="relative group">
               <button className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg font-semibold transition-all duration-300 text-sm border border-white/20">
-                More ▾
+                More &#9660;
               </button>
               <div className="absolute right-0 top-full mt-2 w-48 bg-gray-900 border border-white/10 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                 {SECONDARY_NAV.map(({ to, label }) => (
@@ -107,7 +78,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Mobile hamburger */}
           <button
             className="md:hidden p-2 text-white hover:bg-white/10 rounded-lg transition-colors"
             onClick={() => setMenuOpen(!menuOpen)}
@@ -125,7 +95,6 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Mobile menu */}
         {menuOpen && (
           <div className="md:hidden mt-4 px-4 pb-4 flex flex-col gap-2">
             {[...PRIMARY_NAV.map(({ to, label }) => ({ to, label })), ...SECONDARY_NAV].map(({ to, label }) => (
@@ -151,18 +120,13 @@ export default function Home() {
 
       <div className="relative z-10 min-h-screen flex flex-col">
         <div className="flex-1 flex items-center justify-center py-8">
-          <HotStackHero
-            onTimerComplete={handleTimerComplete}
-            timerExpired={timerExpired}
-            onFilesDrop={handleFilesDrop}
-          />
+          <HotStackHero />
         </div>
 
         <div id="file-manager" className="pb-12">
           <FileManager />
         </div>
 
-        {/* Fruitful Community Section */}
         <div className="pb-12 px-6">
           <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl p-8 border border-white/10 backdrop-blur-sm">
@@ -172,7 +136,7 @@ export default function Home() {
                 </h2>
                 <div className="space-y-4">
                   <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 backdrop-blur-sm rounded-xl p-4 border border-yellow-500/30">
-                    <h3 className="text-lg font-bold text-white mb-2">Fresh & Thoughtful</h3>
+                    <h3 className="text-lg font-bold text-white mb-2">Fresh &amp; Thoughtful</h3>
                     <p className="text-gray-300 text-sm">
                       Fruitful delivers fresh solutions for your digital needs — zero-signup, live in minutes.
                     </p>

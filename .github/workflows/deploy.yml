@@ -13,6 +13,8 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     name: Deploy HotStack Worker
+    env:
+      PRODUCTION_URL: https://hotstack.faa.zone
 
     steps:
       - name: Checkout code
@@ -30,17 +32,83 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Verify frontend build output
+        run: |
+          if [ ! -d dist/client ]; then
+            echo "::error::Frontend build directory dist/client is missing"
+            exit 1
+          fi
+          if [ ! -f dist/client/index.html ]; then
+            echo "::error::Frontend build artifact dist/client/index.html is missing"
+            exit 1
+          fi
+          echo "✅ Frontend build verified: dist/client/index.html exists"
+          echo "Built client assets:"
+          ls -lh dist/client/
+          if [ -d dist/client/assets ]; then
+            ls -lh dist/client/assets/
+          fi
+
       - name: Wrangler diagnostics
         run: npx wrangler --version
+
+      - name: Parse Cloudflare Account ID
+        id: cf-account
+        run: |
+          RAW="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+          # Trim whitespace from the raw secret value.
+          TRIMMED=$(echo "$RAW" | tr -d '[:space:]')
+          # Prefer the trimmed value if it is already a bare 32-character hex ID.
+          if echo "$TRIMMED" | grep -qE '^[0-9a-fA-F]{32}$'; then
+            ACCOUNT_ID="$TRIMMED"
+          else
+            # Fall back: extract the first exactly-32-char hex token from a
+            # config-file formatted secret (e.g. account_id = "ad41fcfe1a84b27c62cc5cc9d590720e").
+            ACCOUNT_ID=$(echo "$RAW" | grep -oE '[0-9a-fA-F]+' | awk 'length==32' | head -1)
+          fi
+          if [ -z "$ACCOUNT_ID" ]; then
+            echo "::error::Could not resolve a valid 32-character hex Cloudflare Account ID from the CLOUDFLARE_ACCOUNT_ID secret. The secret should be the bare 32-character account ID (e.g. ad41fcfe1a84b27c62cc5cc9d590720e)."
+            exit 1
+          fi
+          echo "account_id=$ACCOUNT_ID" >> "$GITHUB_OUTPUT"
 
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          accountId: ${{ steps.cf-account.outputs.account_id }}
           command: deploy
+
+      - name: Smoke test — verify production frontend
+        run: |
+          # Retry up to 6 times (60s total) to allow Cloudflare to propagate the deployment.
+          MAX_ATTEMPTS=6
+          SLEEP_SECONDS=10
+          CURL_TIMEOUT=15
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time "$CURL_TIMEOUT" "$PRODUCTION_URL" || echo "CURL_FAIL")
+            echo "Attempt $i/$MAX_ATTEMPTS — HTTP status: $STATUS"
+            case "$STATUS" in
+              200)
+                echo "✅ Smoke test passed — $PRODUCTION_URL returned HTTP 200"
+                exit 0
+                ;;
+              [0-9]*)
+                echo "Received HTTP $STATUS; retrying..."
+                ;;
+              *)
+                echo "curl failed (DNS/network/timeout); retrying..."
+                ;;
+            esac
+            if [ "$i" -lt "$MAX_ATTEMPTS" ]; then
+              echo "Waiting ${SLEEP_SECONDS}s before next attempt..."
+              sleep "$SLEEP_SECONDS"
+            fi
+          done
+          echo "::error::Smoke test failed — $PRODUCTION_URL did not return HTTP 200 after $MAX_ATTEMPTS attempts (last status: $STATUS)"
+          exit 1
 
       - name: Deployment summary
         run: |
           echo "✅ HotStack deployed successfully"
-          echo "🌐 https://hotstack.faa.zone"
+          echo "🌐 $PRODUCTION_URL"

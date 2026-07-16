@@ -24,7 +24,7 @@ dropzone.post('/analyze', async (c) => {
     // Extract file content based on type
     let fileContent = '';
     let fileType = file.type;
-    let fileName = file.name;
+    const fileName = file.name;
 
     if (file.type === 'text/html' || file.name.endsWith('.html')) {
       fileContent = await file.text();

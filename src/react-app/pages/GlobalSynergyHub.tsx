@@ -274,7 +274,7 @@ export default function GlobalSynergyHub() {
         setSpotifyMessage(data.error || 'Failed to fetch tracks');
         setSpotifyTracks([]);
       }
-    } catch (error) {
+    } catch {
       setSpotifyMessage('Network error fetching tracks');
       setSpotifyTracks([]);
     }
@@ -303,7 +303,7 @@ export default function GlobalSynergyHub() {
       } else {
         setFaqAnswer(data.error || 'Failed to get answer');
       }
-    } catch (error) {
+    } catch {
       setFaqAnswer('Network error. Please try again.');
     } finally {
       setFaqLoading(false);

@@ -1,3 +1,10 @@
 node_modules/
 *.js
 !omnigrid-master/core/fruitful-global/**/*.js
+
+# Build output
+dist/
+
+# Cloudflare Workers
+worker-configuration.d.ts
+.wrangler/

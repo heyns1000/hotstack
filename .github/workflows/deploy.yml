@@ -21,7 +21,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
 
       - name: Install dependencies
@@ -29,6 +29,9 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Wrangler diagnostics
+        run: npx wrangler --version
 
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3

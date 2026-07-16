@@ -292,7 +292,7 @@ Format as JSON array with fields: itemName, itemType, itemId, reasoning, confide
       if (jsonMatch) {
         recommendations = JSON.parse(jsonMatch[0]);
       }
-    } catch (e) {
+    } catch {
       // If JSON parsing fails, create structured recommendations from text
       recommendations = [
         {

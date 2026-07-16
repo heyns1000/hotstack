@@ -38,7 +38,7 @@ export function useAdminAuth() {
 
       const userData = await response.json();
       setUser(userData);
-    } catch (error) {
+    } catch {
       localStorage.removeItem('admin_token');
       localStorage.removeItem('admin_user');
       navigate('/admin/login');

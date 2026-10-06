@@ -14,7 +14,7 @@
     "react": "19.0.0",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "19.0.0",
-    "react-router": "^8.3.0",
+    "react-router": "^8.4.0",
     "zod": "^3.24.3"
   },
   "devDependencies": {
@@ -31,7 +31,7 @@
     "eslint-plugin-react-hooks": "5.2.0",
     "eslint-plugin-react-refresh": "0.4.19",
     "globals": "15.15.0",
-    "postcss": "^8.5.23",
+    "postcss": "^8.5.28",
     "tailwindcss": "^4.3.3",
     "typescript": "5.8.3",
     "typescript-eslint": "8.65.0",

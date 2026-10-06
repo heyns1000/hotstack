@@ -1,201 +1,116 @@
-import { useState } from 'react';
 import { Link } from 'react-router';
-import ParticleCanvas from '@/react-app/components/ParticleCanvas';
-import HotStackHero from '@/react-app/components/HotStackHero';
-import FileManager from '@/react-app/components/FileManager';
+import '@/react-app/styles/fruitful.css';
 
-const PRIMARY_NAV = [
-  { to: '/drop-zone', label: '🔥 Drop', gradient: 'from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700' },
-  { to: '/brands',   label: '🔍 Brands', gradient: 'from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700' },
-  { to: '/dashboard', label: '👤 Dashboard', gradient: 'from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700' },
-  { to: '/hotstack', label: '⚡ HotStack', gradient: 'from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700' },
+const QUICK_LINKS = [
+  { to: '/drop-zone',   label: 'Drop Zone',   accent: 'var(--teal)'   },
+  { to: '/brands',      label: 'Brands',      accent: 'var(--yellow)' },
+  { to: '/marketplace', label: 'Marketplace', accent: 'var(--pink)'   },
+  { to: '/vault',       label: 'Vault',       accent: 'var(--darkteal)' },
+  { to: '/dashboard',   label: 'Dashboard',   accent: 'var(--maroon)' },
+  { to: '/ecosystem',   label: 'Ecosystem',   accent: 'var(--rteal)'  },
+  { to: '/cart',        label: 'Cart',        accent: 'var(--yellow)' },
+  { to: '/faa-global',  label: 'FAA Global',  accent: 'var(--red)'    },
 ];
 
-const SECONDARY_NAV = [
-  { to: '/ecosystem', label: '🌐 Ecosystem' },
-  { to: '/scroll', label: '📜 Scroll' },
-  { to: '/cart', label: '🛒 Cart' },
-  { to: '/faa-global', label: '🌍 FAA Global' },
-  { to: '/mocha-integration', label: '🔗 Integration' },
-  { to: '/api-demos', label: '🧪 API Demos' },
+const STATS = [
+  { value: '7,102', label: 'Brands' },
+  { value: '33',    label: 'Sectors' },
+  { value: '50',    label: 'API Endpoints' },
+  { value: '12',    label: 'D1 Tables' },
+  { value: '9s',    label: 'Pulse Interval' },
+  { value: '180s',  label: 'Deploy Window' },
 ];
 
 export default function Home() {
-  const [timerExpired, setTimerExpired] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  const handleTimerComplete = () => setTimerExpired(true);
-
-  const handleFilesDrop = async (files: FileList) => {
-    const file = files[0];
-    if (file.type !== 'text/html' && file.type !== 'application/pdf') {
-      alert('Only HTML or PDF files can be omnidropped.');
-      return;
-    }
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const response = await fetch('/api/upload', { method: 'POST', body: formData });
-      if (!response.ok) throw new Error('Upload failed');
-      alert(`"${file.name}" is being omnidropped into CodeNest™!`);
-      setTimeout(() => {
-        document.getElementById('file-manager')?.scrollIntoView({ behavior: 'smooth' });
-      }, 1000);
-    } catch {
-      alert('Failed to omnidrop file. Please try again.');
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-[#1a1a1c] overflow-hidden">
-      <ParticleCanvas />
-
-      {/* Fruitful Branding Header */}
-      <div className="relative z-20 bg-gradient-to-r from-yellow-600/10 to-teal-600/10 border-b border-white/10 py-3">
-        <div className="container mx-auto px-6 flex items-center justify-center">
-          <img
-            src="https://019b707b-b33f-7a1c-a703-57213a84f433.mochausercontent.com/Billboard_retail_respitory_in_seedwave.png"
-            alt="Fruitful HOME"
-            className="h-16 w-auto object-contain hover:scale-105 transition-transform"
-          />
+    <div style={{ minHeight: '100vh', background: 'var(--surface-0)', color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>
+      {/* Hero */}
+      <section style={{ padding: 'clamp(3rem, 8vw, 7rem) 1.5rem clamp(2rem, 6vw, 5rem)', textAlign: 'center', maxWidth: 900, margin: '0 auto' }}>
+        {/* Pear mark */}
+        <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'center' }}>
+          <svg width="56" height="72" viewBox="0 0 56 72" fill="none" aria-hidden="true">
+            <ellipse cx="28" cy="46" rx="22" ry="26" fill="var(--teal)" opacity=".9"/>
+            <ellipse cx="28" cy="24" rx="13" ry="16" fill="var(--darkteal)"/>
+            <path d="M28 8 C30 2 36 2 34 8" stroke="var(--yellow)" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+            <ellipse cx="22" cy="12" rx="6" ry="3.5" fill="var(--teal)" transform="rotate(-30 22 12)" opacity=".7"/>
+          </svg>
         </div>
-      </div>
 
-      {/* Navigation */}
-      <nav className="relative z-20 px-4 py-4 border-b border-white/5">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          {/* Logo */}
-          <Link to="/" className="text-xl font-bold text-white whitespace-nowrap shrink-0">
-            Fruitful | CodeNest™
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--teal)', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '1rem' }}>
+          Fruitful™ Ecosystem · HotStack™ · VaultMesh™ L7 · PulseGrid™
+        </div>
+
+        <h1 style={{ fontSize: 'clamp(2.2rem, 6vw, 4rem)', lineHeight: 1.1, marginBottom: '1.25rem', textWrap: 'balance' }}>
+          The Ultimate<br />
+          <span style={{ color: 'var(--teal)' }}>Ecosystem</span> Engine
+        </h1>
+
+        <p style={{ color: 'var(--text-secondary)', fontSize: 'clamp(0.95rem, 2.5vw, 1.1rem)', lineHeight: 1.7, maxWidth: 640, margin: '0 auto 2rem' }}>
+          HotStack™ unifies 7,102 brands across 33 sectors on a single Cloudflare Worker with D1 SQLite, R2 storage, and a 9-second VaultMesh™ heartbeat. One platform. Infinite reach.
+        </p>
+
+        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <Link to="/ecosystem" style={{
+            padding: '0.7rem 1.6rem', background: 'var(--teal)', color: 'var(--text-on-teal)',
+            borderRadius: 8, textDecoration: 'none', fontFamily: 'var(--font-mono)',
+            fontSize: '0.85rem', fontWeight: 700,
+          }}>
+            Explore Ecosystem
           </Link>
-
-          {/* Primary nav — always visible on md+ */}
-          <div className="hidden md:flex items-center gap-2 flex-wrap">
-            {PRIMARY_NAV.map(({ to, label, gradient }) => (
-              <Link
-                key={to}
-                to={to}
-                className={`px-4 py-2 bg-gradient-to-r ${gradient} text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg text-sm whitespace-nowrap`}
-              >
-                {label}
-              </Link>
-            ))}
-
-            {/* More dropdown */}
-            <div className="relative group">
-              <button className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg font-semibold transition-all duration-300 text-sm border border-white/20">
-                More ▾
-              </button>
-              <div className="absolute right-0 top-full mt-2 w-48 bg-gray-900 border border-white/10 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                {SECONDARY_NAV.map(({ to, label }) => (
-                  <Link
-                    key={to}
-                    to={to}
-                    className="block px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-white/10 first:rounded-t-xl last:rounded-b-xl transition-colors"
-                  >
-                    {label}
-                  </Link>
-                ))}
-                <div className="border-t border-white/10" />
-                <a
-                  href="/admin/login"
-                  className="block px-4 py-3 text-sm text-gray-500 hover:text-gray-300 hover:bg-white/5 rounded-b-xl transition-colors"
-                >
-                  🔐 Admin
-                </a>
-              </div>
-            </div>
-          </div>
-
-          {/* Mobile hamburger */}
-          <button
-            className="md:hidden p-2 text-white hover:bg-white/10 rounded-lg transition-colors"
-            onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Toggle menu"
-          >
-            {menuOpen ? (
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            ) : (
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            )}
-          </button>
+          <Link to="/drop-zone" style={{
+            padding: '0.7rem 1.6rem', background: 'transparent', color: 'var(--yellow)',
+            border: '1px solid var(--yellow)', borderRadius: 8, textDecoration: 'none',
+            fontFamily: 'var(--font-mono)', fontSize: '0.85rem', fontWeight: 700,
+          }}>
+            OmniDrop
+          </Link>
         </div>
+      </section>
 
-        {/* Mobile menu */}
-        {menuOpen && (
-          <div className="md:hidden mt-4 px-4 pb-4 flex flex-col gap-2">
-            {[...PRIMARY_NAV.map(({ to, label }) => ({ to, label })), ...SECONDARY_NAV].map(({ to, label }) => (
-              <Link
-                key={to}
-                to={to}
-                onClick={() => setMenuOpen(false)}
-                className="block px-4 py-3 text-white bg-white/10 hover:bg-white/20 rounded-lg font-semibold transition-colors"
-              >
-                {label}
-              </Link>
-            ))}
-            <a
-              href="/admin/login"
-              onClick={() => setMenuOpen(false)}
-              className="block px-4 py-3 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors text-sm"
+      {/* Stats bar */}
+      <section style={{ borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', background: 'var(--surface-1)', padding: '1.5rem' }}>
+        <div style={{ maxWidth: 960, margin: '0 auto', display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '0.25rem' }}>
+          {STATS.map(({ value, label }) => (
+            <div key={label} style={{ textAlign: 'center', padding: '0.75rem 1.5rem' }}>
+              <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.6rem', color: 'var(--yellow)', fontVariantNumeric: 'tabular-nums' }}>{value}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '0.2rem' }}>{label}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Quick links */}
+      <section style={{ padding: 'clamp(2rem, 6vw, 4rem) 1.5rem', maxWidth: 960, margin: '0 auto' }}>
+        <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.4rem', color: 'var(--text-primary)', marginBottom: '1.25rem', textAlign: 'center' }}>
+          Quick Access
+        </h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '0.75rem' }}>
+          {QUICK_LINKS.map(({ to, label, accent }) => (
+            <Link key={to} to={to} style={{
+              display: 'block', padding: '1.1rem', background: 'var(--surface-1)',
+              border: `1px solid ${accent}44`, borderRadius: 12, textDecoration: 'none',
+              textAlign: 'center', fontFamily: 'var(--font-serif)', fontSize: '0.92rem',
+              color: accent, transition: 'background 0.15s, border-color 0.15s',
+            }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'; (e.currentTarget as HTMLElement).style.borderColor = accent; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'var(--surface-1)'; (e.currentTarget as HTMLElement).style.borderColor = `${accent}44`; }}
             >
-              🔐 Admin
-            </a>
-          </div>
-        )}
-      </nav>
-
-      <div className="relative z-10 min-h-screen flex flex-col">
-        <div className="flex-1 flex items-center justify-center py-8">
-          <HotStackHero
-            onTimerComplete={handleTimerComplete}
-            timerExpired={timerExpired}
-            onFilesDrop={handleFilesDrop}
-          />
+              {label}
+            </Link>
+          ))}
         </div>
+      </section>
 
-        <div id="file-manager" className="pb-12">
-          <FileManager />
-        </div>
-
-        {/* Fruitful Community Section */}
-        <div className="pb-12 px-6">
-          <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl p-8 border border-white/10 backdrop-blur-sm">
-              <div className="space-y-6">
-                <h2 className="text-4xl font-black text-white flex items-center gap-2">
-                  <span>🍎</span> Proudly Fruitful™
-                </h2>
-                <div className="space-y-4">
-                  <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 backdrop-blur-sm rounded-xl p-4 border border-yellow-500/30">
-                    <h3 className="text-lg font-bold text-white mb-2">Fresh & Thoughtful</h3>
-                    <p className="text-gray-300 text-sm">
-                      Fruitful delivers fresh solutions for your digital needs — zero-signup, live in minutes.
-                    </p>
-                  </div>
-                  <div className="bg-gradient-to-r from-green-500/20 to-teal-500/20 backdrop-blur-sm rounded-xl p-4 border border-green-500/30">
-                    <h3 className="text-lg font-bold text-white mb-2">Community First</h3>
-                    <p className="text-gray-300 text-sm">
-                      From retail to ecosystem management, we build tools that serve your community with care and creativity.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-                <img
-                  src="https://019b707b-b33f-7a1c-a703-57213a84f433.mochausercontent.com/RIDDLE.jpg"
-                  alt="Fruitful Community"
-                  className="w-full h-auto rounded-lg shadow-lg hover:scale-105 transition-transform duration-300"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Genesis signal footer strip */}
+      <section style={{ borderTop: '1px solid var(--border)', padding: '1.25rem 1.5rem', textAlign: 'center' }}>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+          Genesis Signal&nbsp;
+          <span style={{ color: 'var(--yellow)' }}>SEEDWAVE-011-CORE</span>
+          &nbsp;·&nbsp;Priority lock active&nbsp;·&nbsp;
+          <span style={{ color: 'var(--teal)' }}>NexusNair PulseGrid™</span>
+          &nbsp;heartbeat: 1,247,892 pulses
+        </p>
+      </section>
     </div>
   );
 }

@@ -1,7 +1,9 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router";
 import { CurrencyProvider } from "@/react-app/hooks/useCurrency";
+import Layout from "@/react-app/components/Layout";
 import HomePage from "@/react-app/pages/Home";
 import EcosystemExplorer from "@/react-app/pages/EcosystemExplorer";
+import EcosystemEnhanced from "@/react-app/pages/EcosystemEnhanced";
 import HotStackAdmin from "@/react-app/pages/HotStackAdmin";
 import GlobalBrandSearch from "@/react-app/pages/GlobalBrandSearch";
 import UserDashboard from "@/react-app/pages/UserDashboard";
@@ -18,30 +20,40 @@ import MochaAppIntegration from "@/react-app/pages/MochaAppIntegration";
 import ShoppingCart from "@/react-app/pages/ShoppingCart";
 import FileScroll from "@/react-app/pages/FileScroll";
 import FAAGlobalRelease from "@/react-app/pages/FAAGlobalRelease";
+import LicenseMarketplace from "@/react-app/pages/LicenseMarketplace";
+import VaultDashboard from "@/react-app/pages/VaultDashboard";
 
 export default function App() {
   return (
     <CurrencyProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/ecosystem" element={<EcosystemExplorer />} />
-          <Route path="/hotstack" element={<HotStackAdmin />} />
-          <Route path="/brands" element={<GlobalBrandSearch />} />
-          <Route path="/dashboard" element={<UserDashboard />} />
-          <Route path="/brand-management" element={<BrandManagement />} />
-          <Route path="/drop-zone" element={<HotStackDropZone />} />
-          <Route path="/api-demos" element={<APIDemos />} />
+          {/* Shell layout wraps all main routes */}
+          <Route element={<Layout />}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/ecosystem" element={<EcosystemEnhanced />} />
+            <Route path="/ecosystem/classic" element={<EcosystemExplorer />} />
+            <Route path="/hotstack" element={<HotStackAdmin />} />
+            <Route path="/brands" element={<GlobalBrandSearch />} />
+            <Route path="/dashboard" element={<UserDashboard />} />
+            <Route path="/brand-management" element={<BrandManagement />} />
+            <Route path="/drop-zone" element={<HotStackDropZone />} />
+            <Route path="/api-demos" element={<APIDemos />} />
+            <Route path="/global-synergy-hub" element={<GlobalSynergyHub />} />
+            <Route path="/mocha-integration" element={<MochaAppIntegration />} />
+            <Route path="/cart" element={<ShoppingCart />} />
+            <Route path="/scroll" element={<FileScroll />} />
+            <Route path="/faa-global" element={<FAAGlobalRelease />} />
+            <Route path="/marketplace" element={<LicenseMarketplace />} />
+            <Route path="/vault" element={<VaultDashboard />} />
+          </Route>
+
+          {/* Admin routes — no Layout shell */}
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/files" element={<AdminFiles />} />
           <Route path="/admin/logs" element={<AdminLogs />} />
           <Route path="/admin/system" element={<AdminSystem />} />
-          <Route path="/global-synergy-hub" element={<GlobalSynergyHub />} />
-          <Route path="/mocha-integration" element={<MochaAppIntegration />} />
-          <Route path="/cart" element={<ShoppingCart />} />
-          <Route path="/scroll" element={<FileScroll />} />
-          <Route path="/faa-global" element={<FAAGlobalRelease />} />
         </Routes>
       </Router>
     </CurrencyProvider>

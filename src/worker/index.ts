@@ -10,6 +10,7 @@ import mochaApp from "./routes/mocha-app";
 import vaultmesh from "./routes/vaultmesh";
 import cart from "./routes/cart";
 import sync from "./routes/sync";
+import brands from "./routes/brands";
 import type { Env } from "./types";
 
 const app = new Hono<{ Bindings: Env }>();
@@ -45,6 +46,9 @@ app.route("/api/cart", cart);
 
 // Sync routes
 app.route("/api/sync", sync);
+
+// Brands routes
+app.route("/api/brands", brands);
 
 // Upload file endpoint
 app.post("/api/upload", async (c) => {
